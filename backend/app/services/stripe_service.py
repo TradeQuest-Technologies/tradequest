@@ -16,7 +16,7 @@ class StripeService:
     """Service for handling Stripe billing operations"""
     
     def __init__(self):
-        self.publishable_key = "pk_test_51SBKG3IvhoH7AcaHmExZTPCnxMCersQIFQ5S3o0yrs41H2ShnmfH8E2Gne7o5Mbk4y2XVi9VuxZeaKWbkuzYqxI300J0G188OP"
+        self.publishable_key = "pk_live_51SBKFxEc0UfOtXXQqpmJlBslvKHKdr8OaBc9hOnh3wgaOxrQcp9wyJ0I4CluxVxTHCqQ22iwpy6o0AsxXezG5Y3z00SBoIkVbX"
         
         # Plan configurations
         self.plans = {
@@ -37,7 +37,7 @@ class StripeService:
             "plus": {
                 "name": "Plus",
                 "price": 29,
-                "price_id": "price_plus_monthly",  # Will be created in Stripe dashboard
+                "price_id": "price_1SEDPKEc0UfOtXXQWVbLwv3M",  # Live Stripe Price ID
                 "features": [
                     "Unlimited trades",
                     "Advanced trade journal with screenshots",
