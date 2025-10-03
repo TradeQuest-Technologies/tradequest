@@ -149,12 +149,12 @@ resource "aws_lb_listener_rule" "backend_https" {
   tags = local.common_tags
 }
 
-# Route 53 Record (if domain is provided)
-resource "aws_route53_record" "main" {
+# Route 53 Record for Load Balancer (for API only now)
+resource "aws_route53_record" "api" {
   count = var.domain_name != "" ? 1 : 0
 
   zone_id = var.route53_zone_id
-  name    = var.domain_name
+  name    = "api.${var.domain_name}"
   type    = "A"
 
   alias {
