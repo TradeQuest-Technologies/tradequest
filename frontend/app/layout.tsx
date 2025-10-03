@@ -7,9 +7,12 @@ import { ThemeProvider } from '../components/ThemeProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'TradeQuest - Path to Profitability Platform',
-  description: 'No gurus. No signals. Just your data, real analysis, and disciplined growth.',
+  title: 'TradeQuest',
+  description: 'Trading journal, analytics, and AI coaching platform for traders.',
   keywords: 'trading, journal, backtesting, analysis, crypto, stocks',
+  icons: {
+    icon: '/images/logos/Transparent/TradeQuest [Icon Only] [Colored] [Square].png',
+  },
 }
 
 export default function RootLayout({
