@@ -2,7 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  output: 'standalone',
+  // Temporarily remove standalone for initial deployment
+  // output: 'standalone',
   experimental: {
     serverComponentsExternalPackages: [],
   },

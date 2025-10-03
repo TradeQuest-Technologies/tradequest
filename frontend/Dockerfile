@@ -1,48 +1,43 @@
 # syntax=docker/dockerfile:1
 
-# Build stage
-FROM node:18-alpine AS builder
+# ---- Build Stage ----
+FROM node:20-bullseye-slim AS build
 
 WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm ci && npm cache clean --force
+RUN npm ci
 
-# Copy source code
+# Copy source and build
 COPY . .
+RUN npm run build && npm prune --production
 
-# Build Next.js in standalone mode
-RUN npm run build
-
-# Production stage
-FROM node:18-alpine AS production
+# ---- Runtime Stage ----
+FROM node:20-bullseye-slim
 
 WORKDIR /app
 
-# Install curl for healthchecks
-RUN apk add --no-cache curl
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-
-# Copy standalone server and dependencies
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-# Switch to non-root user
-USER nextjs
-
-# Expose port 3000
-EXPOSE 3000
+# Install curl for health checks
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set production environment
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
-# Start the Next.js standalone server bound to all interfaces
-# The standalone server.js respects HOSTNAME env variable
-CMD ["node", "server.js"]
+# Copy application from build stage
+COPY --from=build /app ./
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+# Start Next.js with explicit binding to all interfaces
+CMD ["npx", "next", "start", "-p", "3000", "-H", "0.0.0.0"]
