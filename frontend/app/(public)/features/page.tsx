@@ -102,28 +102,37 @@ export default function FeaturesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-900">
       {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200">
+      <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Link href="/" className="text-2xl font-bold text-gradient">TradeQuest</Link>
+                <Link href="/">
+                  <img
+                    src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
+                    alt="TradeQuest"
+                    className="h-10 w-auto"
+                  />
+                </Link>
               </div>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/features" className="text-brand-dark-teal px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/features" className="text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium">
                   Features
                 </Link>
-                <Link href="/pricing" className="text-gray-700 hover:text-brand-dark-teal px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/pricing" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Pricing
                 </Link>
-                <Link href="/docs" className="text-gray-700 hover:text-brand-dark-teal px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/docs" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Docs
                 </Link>
-                <Link href="/auth" className="bg-brand-bright-yellow text-brand-dark-teal hover:bg-brand-bright-yellow/90 px-4 py-2 rounded-md text-sm font-medium">
+                <Link href="/contact" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Contact
+                </Link>
+                <Link href="/auth" className="bg-brand-bright-yellow text-gray-900 hover:bg-brand-bright-yellow/90 px-6 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl">
                   Get Started
                 </Link>
               </div>
@@ -133,7 +142,7 @@ export default function FeaturesPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-dark-teal to-brand-bright-yellow">
+      <section className="py-24 bg-gradient-to-br from-gray-900 via-brand-dark-teal/20 to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -146,7 +155,7 @@ export default function FeaturesPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto"
+            className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed"
           >
             Everything you need to analyze, improve, and optimize your trading performance. 
             From AI coaching to advanced analytics, we've got you covered.
@@ -155,41 +164,41 @@ export default function FeaturesPage() {
       </section>
 
       {/* Main Features */}
-      <section className="py-20">
+      <section className="py-20 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-20">
+          <div className="space-y-24">
             {mainFeatures.map((feature, index) => (
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-12`}
+                className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-16`}
               >
                 <div className="flex-1">
-                  <div className="bg-brand-bright-yellow/20 w-20 h-20 rounded-full flex items-center justify-center mb-6">
-                    <feature.icon className="h-10 w-10 text-brand-dark-teal" />
+                  <div className="bg-gradient-to-br from-brand-teal to-brand-bright-yellow w-20 h-20 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-teal/50">
+                    <feature.icon className="h-10 w-10 text-white" />
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
                     {feature.title}
                   </h2>
-                  <p className="text-xl text-gray-600 mb-6">
+                  <p className="text-xl text-gray-400 mb-8 leading-relaxed">
                     {feature.description}
                   </p>
-                  <ul className="space-y-3">
+                  <ul className="space-y-4">
                     {feature.features.map((item, itemIndex) => (
                       <li key={itemIndex} className="flex items-center">
-                        <CheckIcon className="h-5 w-5 text-brand-bright-yellow mr-3 flex-shrink-0" />
-                        <span className="text-gray-700">{item}</span>
+                        <CheckIcon className="h-6 w-6 text-brand-bright-yellow mr-4 flex-shrink-0" />
+                        <span className="text-gray-300 text-lg">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div className="flex-1">
-                  <div className="bg-gray-100 rounded-lg p-8 h-80 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <feature.icon className="h-24 w-24 mx-auto mb-4" />
-                      <p>Feature Preview</p>
+                  <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-12 h-96 flex items-center justify-center hover:border-brand-teal transition-all duration-300">
+                    <div className="text-center">
+                      <feature.icon className="h-32 w-32 mx-auto mb-6 text-brand-teal" />
+                      <p className="text-gray-500 text-lg">Feature Preview</p>
                     </div>
                   </div>
                 </div>
@@ -200,13 +209,13 @@ export default function FeaturesPage() {
       </section>
 
       {/* Additional Features */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
               And Much More
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-400">
               Additional tools and features to enhance your trading experience.
             </p>
           </div>
@@ -217,15 +226,15 @@ export default function FeaturesPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-200"
+                className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 p-8 rounded-2xl hover:border-brand-teal hover:shadow-xl hover:shadow-brand-teal/20 transition-all duration-300"
               >
-                <div className="bg-brand-bright-yellow/20 w-12 h-12 rounded-full flex items-center justify-center mb-4">
-                  <feature.icon className="h-6 w-6 text-brand-dark-teal" />
+                <div className="bg-brand-teal/10 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                  <feature.icon className="h-8 w-8 text-brand-teal" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-2xl font-bold text-white mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-400 leading-relaxed">
                   {feature.description}
                 </p>
               </motion.div>
@@ -234,48 +243,23 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* Integration Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Seamless Integrations
-            </h2>
-            <p className="text-xl text-gray-600">
-              Connect with your favorite brokers and tools.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center">
-            {["Kraken", "Coinbase Advanced", "Binance", "Interactive Brokers"].map((broker, index) => (
-              <motion.div
-                key={broker}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-gray-100 rounded-lg p-8 text-center hover:shadow-lg transition-shadow duration-200"
-              >
-                <div className="text-2xl font-bold text-gray-700">{broker}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Integration Section - Removed (broker integrations not implemented yet) */}
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-brand-dark-teal to-brand-bright-yellow">
+      <section className="py-24 bg-gradient-to-br from-brand-teal via-brand-dark-teal to-gray-900">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Ready to Experience These Features?
           </h2>
-          <p className="text-xl text-white/90 mb-8">
+          <p className="text-xl text-gray-200 mb-10">
             Start your free trial today and see how TradeQuest can transform your trading.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth" className="bg-white text-brand-dark-teal hover:bg-gray-50 text-lg font-semibold px-8 py-3 rounded-lg shadow-lg transition-colors duration-200 inline-flex items-center justify-center">
+            <Link href="/auth" className="bg-brand-bright-yellow text-gray-900 hover:bg-brand-bright-yellow/90 text-lg font-bold px-10 py-4 rounded-xl shadow-2xl transition-all duration-200 hover:scale-105 inline-flex items-center justify-center">
               Start Free Trial
               <ArrowRightIcon className="ml-2 h-5 w-5" />
             </Link>
-            <Link href="/pricing" className="bg-white/20 text-white hover:bg-white/30 text-lg font-semibold px-8 py-3 rounded-lg transition-colors duration-200">
+            <Link href="/pricing" className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 text-white hover:bg-gray-900 hover:border-brand-bright-yellow text-lg font-semibold px-10 py-4 rounded-xl transition-all duration-200">
               View Pricing
             </Link>
           </div>
@@ -283,42 +267,44 @@ export default function FeaturesPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-black border-t border-gray-800 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
             <div>
-              <h3 className="text-xl font-bold text-gradient mb-4">TradeQuest</h3>
-              <p className="text-gray-400">
+              <img
+                src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
+                alt="TradeQuest"
+                className="h-10 w-auto mb-4"
+              />
+              <p className="text-gray-400 leading-relaxed">
                 The trading platform that focuses on education, discipline, and continuous improvement.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/features" className="hover:text-white">Features</Link></li>
-                <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
-                <li><Link href="/docs" className="hover:text-white">Documentation</Link></li>
+              <h4 className="font-bold text-white mb-4">Product</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li><Link href="/features" className="hover:text-brand-bright-yellow transition-colors">Features</Link></li>
+                <li><Link href="/pricing" className="hover:text-brand-bright-yellow transition-colors">Pricing</Link></li>
+                <li><Link href="/docs" className="hover:text-brand-bright-yellow transition-colors">Documentation</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/about" className="hover:text-white">About</Link></li>
-                <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
-                <li><Link href="/careers" className="hover:text-white">Careers</Link></li>
+              <h4 className="font-bold text-white mb-4">Company</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li><Link href="/contact" className="hover:text-brand-bright-yellow transition-colors">Contact</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
-                <li><Link href="/disclaimer" className="hover:text-white">Risk Disclaimer</Link></li>
+              <h4 className="font-bold text-white mb-4">Legal</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li><Link href="/terms" className="hover:text-brand-bright-yellow transition-colors">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="hover:text-brand-bright-yellow transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/risk-disclaimer" className="hover:text-brand-bright-yellow transition-colors">Risk Disclaimer</Link></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 TradeQuest. All rights reserved.</p>
+          <div className="border-t border-gray-800 pt-8 text-center">
+            <p className="text-gray-500">&copy; 2025 TradeQuest. All rights reserved.</p>
           </div>
         </div>
       </footer>
