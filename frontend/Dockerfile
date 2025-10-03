@@ -41,6 +41,8 @@ EXPOSE 3000
 # Set production environment
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-# Start the Next.js server with logging
-CMD ["sh", "-c", "echo 'Starting Next.js standalone server...'; ls -la /app/ | head -20; echo 'Running: node server.js'; node server.js"]
+# Start the Next.js standalone server bound to all interfaces
+# The standalone server.js respects HOSTNAME env variable
+CMD ["node", "server.js"]

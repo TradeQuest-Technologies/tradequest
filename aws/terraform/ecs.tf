@@ -40,6 +40,32 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# IAM Role for ECS Task (for ECS Exec)
+resource "aws_iam_role" "ecs_task" {
+  name = "${local.name_prefix}-ecs-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = local.common_tags
+}
+
+# Policy for ECS Exec (SSM)
+resource "aws_iam_role_policy_attachment" "ecs_task_ssm" {
+  role       = aws_iam_role.ecs_task.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # Custom policy for Secrets Manager access
 resource "aws_iam_policy" "ecs_task_execution_secrets" {
   name        = "${local.name_prefix}-ecs-task-execution-secrets"
@@ -174,6 +200,7 @@ resource "aws_ecs_task_definition" "frontend" {
   cpu                      = var.frontend_cpu
   memory                   = var.frontend_memory
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
 
   container_definitions = jsonencode([
     {
@@ -195,6 +222,14 @@ resource "aws_ecs_task_definition" "frontend" {
         {
           name  = "NODE_ENV"
           value = "production"
+        },
+        {
+          name  = "PORT"
+          value = "3000"
+        },
+        {
+          name  = "HOSTNAME"
+          value = "0.0.0.0"
         }
       ]
 
@@ -244,6 +279,12 @@ resource "aws_ecs_service" "frontend" {
   task_definition = aws_ecs_task_definition.frontend.arn
   desired_count   = var.min_capacity
   launch_type     = "FARGATE"
+
+  # Enable ECS Exec for debugging
+  enable_execute_command = true
+
+  # Give the service time to warm up before health checks fail it
+  health_check_grace_period_seconds = 60
 
   network_configuration {
     security_groups  = [aws_security_group.ecs.id]

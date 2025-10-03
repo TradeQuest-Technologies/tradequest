@@ -49,11 +49,11 @@ resource "aws_lb_target_group" "frontend" {
   health_check {
     enabled             = true
     healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 30
+    unhealthy_threshold = 3
+    timeout             = 10
+    interval            = 15
     path                = "/"
-    matcher             = "200"
+    matcher             = "200-399"
     port                = "traffic-port"
     protocol            = "HTTP"
   }
