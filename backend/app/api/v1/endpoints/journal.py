@@ -530,6 +530,15 @@ async def create_trade(
     """Create a new trade manually with optional chart image"""
     
     try:
+        # Check trade limit for free tier users
+        from app.core.plan_limits import check_trade_limit
+        trade_limit_info = check_trade_limit(db, current_user.id)
+        
+        if not trade_limit_info["allowed"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Trade limit reached. You've used {trade_limit_info['current']}/{trade_limit_info['limit']} trades this month. Upgrade to Plus for unlimited trades."
+            )
         # Parse raw data if provided
         raw_data = None
         if raw:

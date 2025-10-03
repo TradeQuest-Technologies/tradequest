@@ -19,17 +19,18 @@ export default function PublicPricingPage() {
       price: { monthly: 0, yearly: 0 },
       description: "Perfect for getting started with trading analysis",
       features: [
-        "Up to 100 trades per month",
-        "Basic trade journal",
-        "Simple performance metrics",
-        "Email support",
+        "Up to 50 trades per month",
+        "Basic trade journal with notes and tags",
+        "Core performance metrics (Win rate, P&L, Profit factor)",
+        "Paper trading simulator",
         "CSV import/export",
-        "Basic charts"
+        "Basic charts and visualizations",
+        "Email support"
       ],
       limitations: [
-        "Limited AI coaching",
-        "No broker integrations",
-        "Basic reports only"
+        "Limited to 50 trades per month",
+        "5 AI coaching sessions per month",
+        "Basic analytics only"
       ],
       cta: "Get Started Free",
       ctaLink: "/auth",
@@ -38,48 +39,25 @@ export default function PublicPricingPage() {
     {
       name: "Plus",
       price: { monthly: 29, yearly: 290 },
-      description: "For serious traders who want comprehensive analysis",
+      description: "For serious traders who want unlimited analysis",
       features: [
         "Unlimited trades",
-        "Advanced trade journal with AI analysis",
-        "Comprehensive performance metrics",
-        "AI trading coach",
-        "Broker integrations (Kraken, Coinbase)",
-        "Advanced charts and indicators",
-        "Daily and weekly reports",
+        "Advanced trade journal with screenshots",
+        "Comprehensive performance metrics & analytics",
+        "Unlimited AI trading coach sessions",
+        "Advanced backtesting studio",
+        "Custom strategy builder",
+        "Advanced charts with technical indicators",
+        "Risk management & discipline alerts",
+        "PDF reports and analytics export",
         "Priority support",
         "Custom tags and categories",
-        "Trade session analysis"
+        "Trade session analysis with heatmaps"
       ],
-      limitations: [
-        "Limited backtesting",
-        "Basic alerts only"
-      ],
+      limitations: [],
       cta: "Start Plus Trial",
       ctaLink: "/auth?plan=plus",
       popular: true
-    },
-    {
-      name: "Pro",
-      price: { monthly: 99, yearly: 990 },
-      description: "For professional traders and trading teams",
-      features: [
-        "Everything in Plus",
-        "Advanced backtesting studio",
-        "Custom strategy development",
-        "Monte Carlo analysis",
-        "Advanced risk management tools",
-        "Telegram and email alerts",
-        "API access",
-        "White-label options",
-        "Team collaboration features",
-        "Custom integrations",
-        "Dedicated account manager"
-      ],
-      limitations: [],
-      cta: "Start Pro Trial",
-      ctaLink: "/auth?plan=pro",
-      popular: false
     }
   ];
 
@@ -102,7 +80,7 @@ export default function PublicPricingPage() {
     },
     {
       question: "Is my trading data secure?",
-      answer: "Yes, we use bank-level encryption and security measures. Your API keys are encrypted and never stored in plain text. We're SOC 2 compliant."
+      answer: "Yes, we use bank-level encryption and security measures. Your data is encrypted at rest and in transit, and we follow industry best practices for security."
     },
     {
       question: "Do you support international traders?",

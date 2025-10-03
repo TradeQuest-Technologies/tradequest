@@ -9,9 +9,6 @@ import {
   DocumentTextIcon,
   ShieldCheckIcon,
   ArrowRightIcon,
-  CheckIcon,
-  StarIcon,
-  PlayIcon,
 } from "@heroicons/react/24/outline";
 
 export default function PublicLandingPage() {
@@ -41,54 +38,27 @@ export default function PublicLandingPage() {
     window.location.href = isValid ? '/dashboard' : '/auth';
   };
 
-  const features = [
-    {
+
+  const coreFeatures = [
+    { 
       icon: ChartBarIcon,
-      title: "Advanced Analytics",
-      description: "Deep insights into your trading performance with AI-powered analysis and visualizations.",
+      title: "Performance Analytics", 
+      description: "Track every metric that matters - win rate, profit factor, drawdown, and more with beautiful visualizations." 
     },
-    {
+    { 
       icon: CpuChipIcon,
-      title: "AI Trading Coach",
-      description: "Get personalized coaching and actionable insights to improve your trading strategy.",
+      title: "AI Trading Coach", 
+      description: "Get personalized insights and coaching on your trades to identify patterns and improve decision-making." 
     },
-    {
+    { 
       icon: DocumentTextIcon,
-      title: "Trade Journal",
-      description: "Comprehensive trade tracking with detailed notes, tags, and performance metrics.",
+      title: "Trade Journal", 
+      description: "Detailed journaling with screenshots, notes, tags, and session tracking to learn from every trade." 
     },
-    {
+    { 
       icon: ShieldCheckIcon,
-      title: "Risk Management",
-      description: "Built-in discipline tools and alerts to help you stick to your trading plan.",
-    },
-  ];
-
-  const stats = [
-    { label: "Active Traders", value: "10,000+" },
-    { label: "Trades Analyzed", value: "2.5M+" },
-    { label: "Average Win Rate Improvement", value: "23%" },
-    { label: "Risk Reduction", value: "35%" },
-  ];
-
-  const testimonials = [
-    {
-      name: "Sarah Chen",
-      role: "Day Trader",
-      content: "TradeQuest helped me identify my biggest weaknesses and improve my win rate by 40% in just 3 months.",
-      rating: 5,
-    },
-    {
-      name: "Mike Rodriguez",
-      role: "Swing Trader",
-      content: "The AI coach is incredible. It's like having a professional mentor available 24/7.",
-      rating: 5,
-    },
-    {
-      name: "Emily Watson",
-      role: "Crypto Trader",
-      content: "Finally, a platform that focuses on education and improvement rather than just execution.",
-      rating: 5,
+      title: "Risk Management", 
+      description: "Set daily limits, stop-loss alerts, and trading rules to protect your capital and maintain discipline." 
     },
   ];
 
@@ -113,6 +83,9 @@ export default function PublicLandingPage() {
                 </Link>
                 <Link href="/docs" className="text-gray-700 hover:text-brand-dark-teal px-3 py-2 rounded-md text-sm font-medium">
                   Docs
+                </Link>
+                <Link href="/contact" className="text-gray-700 hover:text-brand-dark-teal px-3 py-2 rounded-md text-sm font-medium">
+                  Contact
                 </Link>
                 <button
                   onClick={handleSignIn}
@@ -149,8 +122,8 @@ export default function PublicLandingPage() {
               transition={{ delay: 0.1 }}
               className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto"
             >
-              The only trading platform that focuses on education, discipline, and continuous improvement. 
-              Join thousands of traders who are finally turning profitable.
+              A trading platform that focuses on education, discipline, and continuous improvement. 
+              Master your trading psychology and build consistent strategies.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -166,61 +139,36 @@ export default function PublicLandingPage() {
                 {isLoading ? 'Loading...' : 'Start Free Trial'}
                 <ArrowRightIcon className="ml-2 h-5 w-5" />
               </button>
-              <button className="bg-white/20 text-white hover:bg-white/30 text-lg font-semibold px-8 py-3 rounded-lg transition-colors duration-200 flex items-center">
-                <PlayIcon className="mr-2 h-5 w-5" />
-                Watch Demo
-              </button>
+              <Link href="/features" className="bg-white/20 text-white hover:bg-white/30 text-lg font-semibold px-8 py-3 rounded-lg transition-colors duration-200 inline-flex items-center">
+                Explore Features
+                <ArrowRightIcon className="ml-2 h-5 w-5" />
+              </Link>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Feature Highlights */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center"
-              >
-                <div className="text-3xl md:text-4xl font-bold text-brand-dark-teal mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-gray-600">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Everything You Need to Trade Better
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Powerful Features for Serious Traders
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              TradeQuest combines advanced analytics, AI coaching, and discipline tools 
-              to help you become a consistently profitable trader.
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Everything you need to analyze, improve, and master your trading performance
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
+            {coreFeatures.map((feature, index) => (
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow duration-200"
+                className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow"
               >
-                <div className="bg-brand-bright-yellow/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="h-8 w-8 text-brand-dark-teal" />
-                </div>
+                <feature.icon className="h-12 w-12 text-brand-dark-teal mb-4" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   {feature.title}
                 </h3>
@@ -233,40 +181,45 @@ export default function PublicLandingPage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20 bg-gray-50">
+      {/* How It Works */}
+      <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Trusted by Traders Worldwide
+              How TradeQuest Works
             </h2>
-            <p className="text-xl text-gray-600">
-              See what our community has to say about their transformation.
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              A simple three-step process to start improving your trading
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white p-6 rounded-lg shadow-lg"
-              >
-                <div className="flex items-center mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <StarIcon key={i} className="h-5 w-5 text-brand-bright-yellow fill-current" />
-                  ))}
-                </div>
-                <p className="text-gray-700 mb-4 italic">
-                  "{testimonial.content}"
-                </p>
-                <div>
-                  <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                  <div className="text-gray-600 text-sm">{testimonial.role}</div>
-                </div>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="text-center">
+              <div className="bg-brand-teal/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl font-bold text-brand-dark-teal">1</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Track Your Trades</h3>
+              <p className="text-gray-600">
+                Import trades via CSV or enter them manually. Add notes, screenshots, and tags to capture your thought process.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="bg-brand-teal/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl font-bold text-brand-dark-teal">2</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Analyze Performance</h3>
+              <p className="text-gray-600">
+                Review detailed analytics, identify patterns, and get AI-powered insights on what's working and what's not.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="bg-brand-teal/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl font-bold text-brand-dark-teal">3</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Improve & Repeat</h3>
+              <p className="text-gray-600">
+                Apply insights from your AI coach, refine your strategy, and watch your consistency improve over time.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -275,10 +228,10 @@ export default function PublicLandingPage() {
       <section className="py-20 bg-gradient-to-r from-brand-dark-teal to-brand-bright-yellow">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Transform Your Trading?
+            Ready to Elevate Your Trading?
           </h2>
           <p className="text-xl text-white/90 mb-8">
-            Join thousands of traders who are finally turning profitable with TradeQuest.
+            Start tracking, analyzing, and improving your trades today with TradeQuest.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -316,9 +269,7 @@ export default function PublicLandingPage() {
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/about" className="hover:text-white">About</Link></li>
                 <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
-                <li><Link href="/careers" className="hover:text-white">Careers</Link></li>
               </ul>
             </div>
             <div>
@@ -326,12 +277,12 @@ export default function PublicLandingPage() {
               <ul className="space-y-2 text-gray-400">
                 <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
                 <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
-                <li><Link href="/disclaimer" className="hover:text-white">Risk Disclaimer</Link></li>
+                <li><Link href="/risk-disclaimer" className="hover:text-white">Risk Disclaimer</Link></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 TradeQuest. All rights reserved.</p>
+            <p>&copy; 2025 TradeQuest. All rights reserved.</p>
           </div>
         </div>
       </footer>

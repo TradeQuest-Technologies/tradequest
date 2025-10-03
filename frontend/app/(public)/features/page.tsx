@@ -50,8 +50,8 @@ export default function FeaturesPage() {
       title: "Comprehensive Trade Journal",
       description: "Track every trade with detailed notes, tags, and performance metrics.",
       features: [
-        "Automatic trade import from brokers",
-        "Manual trade entry with CSV upload",
+        "Manual trade entry",
+        "CSV import for bulk uploads",
         "Rich text notes and attachments",
         "Custom tags and categorization",
         "Trade session grouping",
@@ -90,14 +90,9 @@ export default function FeaturesPage() {
       description: "Get notified about important market events and trading opportunities."
     },
     {
-      icon: CogIcon,
-      title: "Broker Integrations",
-      description: "Connect with Kraken, Coinbase Advanced, and other major brokers."
-    },
-    {
       icon: ClockIcon,
-      title: "Real-time Sync",
-      description: "Automatically sync your trades and positions in real-time."
+      title: "Session Tracking",
+      description: "Group trades by session and analyze your performance over time."
     },
     {
       icon: CurrencyDollarIcon,

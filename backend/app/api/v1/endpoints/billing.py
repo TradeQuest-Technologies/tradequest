@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.models.user import User, Subscription
 from app.services.stripe_service import StripeService
+from app.core.plan_limits import get_user_plan, get_plan_limits, check_trade_limit, check_ai_coaching_limit
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -21,6 +22,40 @@ async def get_plans():
     
     stripe_service = StripeService()
     return stripe_service.get_plans()
+
+@router.get("/subscription")
+async def get_subscription(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get user's current subscription and usage"""
+    
+    # Get subscription from database
+    subscription = db.query(Subscription).filter(Subscription.user_id == current_user.id).first()
+    
+    # Get plan (defaults to free if no subscription)
+    plan = subscription.plan if subscription else "free"
+    plan_limits = get_plan_limits(plan)
+    
+    # Check current usage
+    trade_limit_info = check_trade_limit(db, current_user.id)
+    coaching_limit_info = check_ai_coaching_limit(db, current_user.id)
+    
+    return {
+        "plan": plan,
+        "status": subscription.status if subscription else "active",
+        "limits": {
+            "trades_per_month": plan_limits["trades_per_month"],
+            "ai_coaching_sessions_per_month": plan_limits["ai_coaching_sessions_per_month"],
+            "backtest_runs_per_month": plan_limits["backtest_runs_per_month"]
+        },
+        "usage": {
+            "trades": trade_limit_info,
+            "ai_coaching": coaching_limit_info
+        },
+        "features": plan_limits["features"],
+        "can_upgrade": plan == "free"
+    }
 
 @router.post("/checkout")
 async def create_checkout_session(
