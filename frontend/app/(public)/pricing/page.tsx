@@ -94,28 +94,31 @@ export default function PublicPricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-900">
       {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200">
+      <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Link href="/" className="text-2xl font-bold text-gradient">TradeQuest</Link>
+                <Link href="/" className="text-2xl font-bold text-white">TradeQuest</Link>
               </div>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/features" className="text-gray-700 hover:text-brand-dark-teal px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/features" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Features
                 </Link>
-                <Link href="/pricing" className="text-brand-dark-teal px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/pricing" className="text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium">
                   Pricing
                 </Link>
-                <Link href="/docs" className="text-gray-700 hover:text-brand-dark-teal px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/docs" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Docs
                 </Link>
-                <Link href="/auth" className="bg-brand-bright-yellow text-brand-dark-teal hover:bg-brand-bright-yellow/90 px-4 py-2 rounded-md text-sm font-medium">
+                <Link href="/contact" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Contact
+                </Link>
+                <Link href="/auth" className="bg-brand-bright-yellow text-gray-900 hover:bg-brand-bright-yellow/90 px-6 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl">
                   Get Started
                 </Link>
               </div>
@@ -125,7 +128,7 @@ export default function PublicPricingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-brand-dark-teal to-brand-bright-yellow">
+      <section className="py-24 bg-gradient-to-br from-gray-900 via-brand-dark-teal/20 to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -138,7 +141,7 @@ export default function PublicPricingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto"
+            className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto"
           >
             Choose the plan that fits your trading needs. Start free, upgrade when you're ready.
           </motion.p>
@@ -150,24 +153,24 @@ export default function PublicPricingPage() {
             transition={{ delay: 0.2 }}
             className="flex items-center justify-center mb-8"
           >
-            <span className={`mr-3 ${billingCycle === 'monthly' ? 'text-white' : 'text-white/70'}`}>
+            <span className={`mr-3 font-medium ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`}>
               Monthly
             </span>
             <button
               onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-              className="relative inline-flex h-6 w-11 items-center rounded-full bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+              className="relative inline-flex h-7 w-14 items-center rounded-full bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-gray-900"
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  billingCycle === 'yearly' ? 'translate-x-6' : 'translate-x-1'
+                className={`inline-block h-5 w-5 transform rounded-full bg-brand-bright-yellow transition-transform ${
+                  billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-1'
                 }`}
               />
             </button>
-            <span className={`ml-3 ${billingCycle === 'yearly' ? 'text-white' : 'text-white/70'}`}>
+            <span className={`ml-3 font-medium ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`}>
               Yearly
             </span>
             {billingCycle === 'yearly' && (
-              <span className="ml-2 bg-white/20 text-white px-2 py-1 rounded-full text-sm">
+              <span className="ml-3 bg-brand-bright-yellow/20 text-brand-bright-yellow px-3 py-1 rounded-full text-sm font-semibold">
                 Save 2 months
               </span>
             )}
@@ -176,22 +179,22 @@ export default function PublicPricingPage() {
       </section>
 
       {/* Pricing Cards */}
-      <section className="py-20 -mt-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <section className="py-20 bg-gray-900">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {plans.map((plan, index) => (
               <motion.div
                 key={plan.name}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`relative bg-white rounded-2xl shadow-lg p-8 ${
-                  plan.popular ? 'ring-2 ring-brand-bright-yellow' : ''
+                className={`relative bg-gray-800/50 backdrop-blur-sm border-2 rounded-2xl p-8 hover:scale-105 transition-all duration-300 ${
+                  plan.popular ? 'border-brand-bright-yellow shadow-2xl shadow-brand-bright-yellow/20' : 'border-gray-700'
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-brand-bright-yellow text-brand-dark-teal px-4 py-1 rounded-full text-sm font-medium flex items-center">
+                    <div className="bg-gradient-to-r from-brand-bright-yellow to-brand-teal text-gray-900 px-6 py-1.5 rounded-full text-sm font-bold flex items-center shadow-lg">
                       <StarIcon className="h-4 w-4 mr-1" />
                       Most Popular
                     </div>
@@ -199,13 +202,13 @@ export default function PublicPricingPage() {
                 )}
                 
                 <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                  <p className="text-gray-600 mb-4">{plan.description}</p>
+                  <h3 className="text-3xl font-bold text-white mb-3">{plan.name}</h3>
+                  <p className="text-gray-400 mb-6">{plan.description}</p>
                   <div className="mb-4">
-                    <span className="text-4xl font-bold text-gray-900">
+                    <span className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-bright-yellow">
                       ${billingCycle === 'monthly' ? plan.price.monthly : Math.floor(plan.price.yearly / 12)}
                     </span>
-                    <span className="text-gray-600 ml-1">
+                    <span className="text-gray-400 ml-2 text-lg">
                       /{billingCycle === 'monthly' ? 'month' : 'month'}
                     </span>
                   </div>
@@ -216,22 +219,22 @@ export default function PublicPricingPage() {
                   )}
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-4 mb-10">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start">
-                      <CheckIcon className="h-5 w-5 text-brand-bright-yellow mr-3 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{feature}</span>
+                      <CheckIcon className="h-6 w-6 text-brand-bright-yellow mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 {plan.limitations.length > 0 && (
-                  <div className="mb-8">
-                    <h4 className="text-sm font-semibold text-gray-900 mb-2">Limitations:</h4>
-                    <ul className="space-y-1">
+                  <div className="mb-8 pt-6 border-t border-gray-700">
+                    <h4 className="text-sm font-semibold text-gray-400 mb-3">Limitations:</h4>
+                    <ul className="space-y-2">
                       {plan.limitations.map((limitation, limitationIndex) => (
                         <li key={limitationIndex} className="flex items-start text-sm text-gray-500">
-                          <XMarkIcon className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
+                          <XMarkIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5 text-gray-600" />
                           {limitation}
                         </li>
                       ))}
@@ -241,10 +244,10 @@ export default function PublicPricingPage() {
 
                 <Link
                   href={plan.ctaLink}
-                  className={`w-full block text-center py-3 px-4 rounded-lg font-semibold transition-colors duration-200 ${
+                  className={`w-full block text-center py-4 px-6 rounded-xl font-bold transition-all duration-200 shadow-lg ${
                     plan.popular
-                      ? 'bg-brand-bright-yellow text-brand-dark-teal hover:bg-brand-bright-yellow/90'
-                      : 'bg-brand-dark-teal text-white hover:bg-brand-dark-teal/90'
+                      ? 'bg-brand-bright-yellow text-gray-900 hover:bg-brand-bright-yellow/90 hover:shadow-xl hover:shadow-brand-bright-yellow/50'
+                      : 'bg-gray-700 text-white hover:bg-gray-600 border border-gray-600 hover:border-brand-teal'
                   }`}
                 >
                   {plan.cta}
@@ -256,29 +259,29 @@ export default function PublicPricingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-800/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
               Frequently Asked Questions
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-400">
               Everything you need to know about TradeQuest pricing and plans.
             </p>
           </div>
-          <div className="space-y-8">
+          <div className="space-y-6">
             {faqs.map((faq, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-lg p-6 shadow-lg"
+                className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-8 hover:border-brand-teal transition-all duration-300"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-bold text-white mb-3">
                   {faq.question}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-400 leading-relaxed">
                   {faq.answer}
                 </p>
               </motion.div>
@@ -288,20 +291,20 @@ export default function PublicPricingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-brand-dark-teal to-brand-bright-yellow">
+      <section className="py-24 bg-gradient-to-br from-brand-teal via-brand-dark-teal to-gray-900">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Ready to Start Your Trading Journey?
           </h2>
-          <p className="text-xl text-white/90 mb-8">
-            Join thousands of traders who are improving their performance with TradeQuest.
+          <p className="text-xl text-gray-200 mb-10">
+            Start improving your trading performance with TradeQuest today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth" className="bg-white text-brand-dark-teal hover:bg-gray-50 text-lg font-semibold px-8 py-3 rounded-lg shadow-lg transition-colors duration-200 inline-flex items-center justify-center">
+            <Link href="/auth" className="bg-brand-bright-yellow text-gray-900 hover:bg-brand-bright-yellow/90 text-lg font-bold px-10 py-4 rounded-xl shadow-2xl transition-all duration-200 hover:scale-105 inline-flex items-center justify-center">
               Start Free Trial
               <ArrowRightIcon className="ml-2 h-5 w-5" />
             </Link>
-            <Link href="/features" className="bg-white/20 text-white hover:bg-white/30 text-lg font-semibold px-8 py-3 rounded-lg transition-colors duration-200">
+            <Link href="/features" className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 text-white hover:bg-gray-900 hover:border-brand-bright-yellow text-lg font-semibold px-10 py-4 rounded-xl transition-all duration-200">
               Learn More
             </Link>
           </div>
