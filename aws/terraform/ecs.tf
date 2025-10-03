@@ -174,7 +174,7 @@ resource "aws_ecs_task_definition" "backend" {
         },
         {
           name  = "ALLOWED_HOSTS"
-          value = "*"
+          value = "[\"*\"]"
         }
       ]
 
