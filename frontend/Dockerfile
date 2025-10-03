@@ -41,12 +41,9 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
-# Set environment variable to run on port 80 for AWS compatibility
-ENV PORT=80
-
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:80/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
 
-# Start Next.js
+# Start Next.js (defaults to port 3000)
 CMD ["npm", "start"]

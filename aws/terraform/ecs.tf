@@ -182,7 +182,7 @@ resource "aws_ecs_task_definition" "frontend" {
       
       portMappings = [
         {
-          containerPort = 80
+          containerPort = 3000
           protocol      = "tcp"
         }
       ]
@@ -204,11 +204,11 @@ resource "aws_ecs_task_definition" "frontend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+        command     = ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
         interval    = 30
-        timeout     = 5
-        retries     = 3
-        startPeriod = 60
+        timeout     = 10
+        retries     = 5
+        startPeriod = 120
       }
     }
   ])
@@ -258,7 +258,7 @@ resource "aws_ecs_service" "frontend" {
   load_balancer {
     target_group_arn = aws_lb_target_group.frontend.arn
     container_name   = "frontend"
-    container_port   = 80
+    container_port   = 3000
   }
 
   depends_on = [aws_lb_listener.frontend]

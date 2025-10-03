@@ -40,8 +40,8 @@ resource "aws_lb_target_group" "backend" {
 
 # Target Group for Frontend
 resource "aws_lb_target_group" "frontend" {
-  name        = "${local.name_prefix}-frontend-tg"
-  port        = 80
+  name        = "${local.name_prefix}-frontend-tg-v2"
+  port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
   target_type = "ip"
