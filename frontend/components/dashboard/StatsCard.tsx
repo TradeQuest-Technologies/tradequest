@@ -46,7 +46,7 @@ export function StatsCard({
 
   const getTrendColor = () => {
     if (change === undefined) return 'text-muted-foreground'
-    return getColorForValue(change, changeType === 'percentage')
+    return getColorForValue(change)
   }
 
   return (
