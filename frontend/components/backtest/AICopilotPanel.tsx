@@ -7,7 +7,7 @@ import {
   SparklesIcon,
   LightBulbIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon
+  XCircleIcon
 } from '@heroicons/react/24/outline'
 
 interface Message {

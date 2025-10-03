@@ -14,7 +14,6 @@ import {
   PencilIcon,
   TrashIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon,
   InformationCircleIcon,
   XCircleIcon
 } from '@heroicons/react/24/outline'
@@ -107,11 +106,11 @@ export default function Alerts() {
       case 'price':
         return <InformationCircleIcon className="h-5 w-5 text-blue-600" />
       case 'volume':
-        return <InformationCircleIcon className="h-5 w-5 text-green-600" />
+        return <BellIcon className="h-5 w-5 text-green-600" />
       case 'indicator':
-        return <InformationCircleIcon className="h-5 w-5 text-purple-600" />
+        return <BellIcon className="h-5 w-5 text-purple-600" />
       case 'risk':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+        return <XCircleIcon className="h-5 w-5 text-red-600" />
       case 'news':
         return <InformationCircleIcon className="h-5 w-5 text-orange-600" />
       default:
@@ -262,7 +261,7 @@ export default function Alerts() {
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
                   <div className="p-2 bg-warning/10 rounded-lg">
-                    <ExclamationTriangleIcon className="h-6 w-6 text-warning-600" />
+                    <InformationCircleIcon className="h-6 w-6 text-warning-600" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Triggered Today</p>

@@ -937,7 +937,6 @@ export default function StrategyBuilder({ graph, onChange, onLog, onSave, onRunU
               {blocks.map(block => (
                 <div
                   key={block.id}
-                  className="block-node"
                   onDoubleClick={(e) => handleBlockDoubleClick(block.id, e)}
                   onMouseDown={(e) => handleBlockMouseDown(block.id, e)}
                   draggable={false}
@@ -947,11 +946,10 @@ export default function StrategyBuilder({ graph, onChange, onLog, onSave, onRunU
                     minWidth: '200px',
                     borderLeftWidth: '4px',
                     borderLeftColor: getBlockColor(block.type),
-                    zIndex: draggedBlockId === block.id ? 100 : 1,
-                    userSelect: 'none'
+                    zIndex: draggedBlockId === block.id ? 100 : 1
                   }}
                   className={`
-                    absolute px-4 py-3 rounded-lg border-2 bg-card shadow-lg
+                    block-node absolute px-4 py-3 rounded-lg border-2 bg-card shadow-lg
                     ${selectedBlock === block.id 
                       ? 'border-brand-dark-teal ring-2 ring-brand-dark-teal/20 scale-105' 
                       : 'border-border hover:border-brand-dark-teal/50'

@@ -2,12 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Card } from '../ui/Card'
-import { ChartBarIcon } from '@heroicons/react/24/outline'
-import { ClockIcon } from '@heroicons/react/24/outline'
-import { CheckCircleIcon } from '@heroicons/react/24/outline'
-import { XCircleIcon } from '@heroicons/react/24/outline'
-import { DocumentTextIcon } from '@heroicons/react/24/outline'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
+import { ChartBarIcon, ClockIcon, CheckCircleIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
+import { XCircleIcon } from '@heroicons/react/24/solid'
 import toast from 'react-hot-toast'
 
 interface ResultsViewerProps {
@@ -241,7 +237,7 @@ export default function ResultsViewer({ run }: ResultsViewerProps) {
                 <div className="mb-6">
                   <div className="p-4 rounded-lg bg-danger-500/10 border border-danger-500/20">
                     <div className="flex items-start gap-3">
-                      <ExclamationTriangleIcon className="h-6 w-6 text-danger-600 flex-shrink-0" />
+                      <XCircleIcon className="h-6 w-6 text-danger-600 flex-shrink-0" />
                       <div>
                         <div className="font-semibold text-danger-600 mb-1">Backtest Failed</div>
                         <div className="text-sm text-muted-foreground">

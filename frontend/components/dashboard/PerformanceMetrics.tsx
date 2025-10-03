@@ -39,6 +39,14 @@ export function PerformanceMetrics({ className }: PerformanceMetricsProps) {
     )
   }
 
+  // Mock metrics data
+  const metricsData: Array<{label: string, value: string, trend: 'up' | 'down' | 'neutral'}> = [
+    { label: 'Win Rate', value: '0%', trend: 'neutral' },
+    { label: 'Profit Factor', value: '0.00', trend: 'neutral' },
+    { label: 'Avg Win', value: '$0', trend: 'neutral' },
+    { label: 'Avg Loss', value: '$0', trend: 'neutral' }
+  ]
+
   return (
     <div className={className}>
       <Card>
@@ -47,7 +55,7 @@ export function PerformanceMetrics({ className }: PerformanceMetricsProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
-            {metrics.map((metric, index) => (
+            {metricsData.map((metric, index) => (
               <div key={index} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">
@@ -61,17 +69,7 @@ export function PerformanceMetrics({ className }: PerformanceMetricsProps) {
                   </Badge>
                 </div>
                 <div className="text-2xl font-bold">
-                  {metric.changeType === 'percentage' 
-                    ? formatPercentage(metric.value)
-                    : formatCurrency(metric.value)
-                  }
-                </div>
-                <div className={`text-sm ${getColorForValue(metric.change, metric.changeType === 'percentage')}`}>
-                  {metric.change > 0 ? '+' : ''}
-                  {metric.changeType === 'percentage' 
-                    ? formatPercentage(metric.change)
-                    : formatCurrency(metric.change)
-                  } from last period
+                  {metric.value}
                 </div>
               </div>
             ))}
@@ -79,24 +77,6 @@ export function PerformanceMetrics({ className }: PerformanceMetricsProps) {
         </CardContent>
       </Card>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Risk Management</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {riskMetrics.map((metric, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{metric.label}</span>
-                  <span className="text-sm font-bold">{metric.value}</span>
-                </div>
-                <Progress value={metric.progress} className="h-2" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

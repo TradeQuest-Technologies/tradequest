@@ -13,7 +13,6 @@ import {
   ArrowUpTrayIcon, 
   DocumentIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon,
   TrashIcon,
   PencilIcon,
   PhotoIcon
@@ -176,7 +175,7 @@ export default function ImportTrades() {
       case 'success':
         return <CheckCircleIcon className="h-5 w-5 text-success-600" />
       case 'error':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-danger-600" />
+        return <TrashIcon className="h-5 w-5 text-danger-600" />
       default:
         return <DocumentIcon className="h-5 w-5 text-muted-foreground" />
     }

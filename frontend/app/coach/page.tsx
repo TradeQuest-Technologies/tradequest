@@ -23,9 +23,10 @@ import {
   CodeBracketIcon,
   ChartPieIcon,
   BoltIcon,
-  TrashIcon
+  TrashIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
+import { CheckCircleIcon as SolidCheckCircle } from '@heroicons/react/24/solid'
 import { formatDateTime } from '../../lib/utils'
 
 interface Message {
@@ -447,7 +448,7 @@ export default function AICoach() {
       case 'success':
         return <CheckCircleIcon className="h-5 w-5 text-success-600" />
       case 'warning':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-warning-600" />
+        return <LightBulbIcon className="h-5 w-5 text-warning-600" />
       case 'info':
         return <LightBulbIcon className="h-5 w-5 text-info-600" />
       default:
@@ -793,7 +794,7 @@ export default function AICoach() {
                                           <div className="w-5 h-5 rounded-full border-2 border-brand-dark-teal border-t-transparent animate-spin" />
                                         )}
                                         {op.status === 'failed' && (
-                                          <ExclamationTriangleIcon className="h-5 w-5 text-warning-500" />
+                                          <XCircleIcon className="h-5 w-5 text-warning-500" />
                                         )}
                                       </div>
                                       <div className="flex-1 min-w-0">

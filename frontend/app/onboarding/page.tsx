@@ -338,7 +338,7 @@ export default function OnboardingPage() {
             first_name: data.first_name,
             last_name: data.last_name,
             birth_date: data.birth_date,
-            alias: data.alias || data.email?.split('@')[0],
+            alias: data.alias || 'trader',
             timezone: data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
             display_currency: data.display_currency || 'USD',
             pnl_visibility_default: data.pnl_visibility_default || 'hide'
@@ -378,11 +378,11 @@ export default function OnboardingPage() {
         case 6: // Discipline Rules
           endpoint = '/api/v1/onboarding/step/6';
           payload = {
-            daily_stop_type: data.daily_stop_type || 'percentage',
-            daily_stop_value: data.daily_stop_value || 5,
-            max_trades_per_day: data.max_trades_per_day || 5,
-            cooldown_minutes: data.cooldown_minutes || 30,
-            apply_rules_now: data.apply_rules_now !== false
+            daily_stop_type: 'percentage',
+            daily_stop_value: 5,
+            max_trades_per_day: 5,
+            cooldown_minutes: 30,
+            apply_rules_now: true
           };
           break;
         case 14: // Complete onboarding
