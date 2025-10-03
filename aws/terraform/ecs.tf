@@ -191,6 +191,10 @@ resource "aws_ecs_task_definition" "frontend" {
         {
           name  = "NEXT_PUBLIC_API_URL"
           value = var.domain_name != "" ? "https://${var.domain_name}" : "http://localhost:8000"
+        },
+        {
+          name  = "NODE_ENV"
+          value = "production"
         }
       ]
 
@@ -201,14 +205,6 @@ resource "aws_ecs_task_definition" "frontend" {
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = "ecs"
         }
-      }
-
-      healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
-        interval    = 30
-        timeout     = 10
-        retries     = 5
-        startPeriod = 120
       }
     }
   ])
