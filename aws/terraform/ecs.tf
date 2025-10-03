@@ -223,7 +223,9 @@ resource "aws_ecs_task_definition" "backend" {
   tags = local.common_tags
 }
 
-# ECS Task Definition for Frontend
+# ECS Task Definition for Frontend (DEPRECATED - Using App Runner instead)
+# Kept for reference, not deployed
+/*
 resource "aws_ecs_task_definition" "frontend" {
   family                   = "${local.name_prefix}-frontend"
   network_mode             = "awsvpc"
@@ -277,6 +279,7 @@ resource "aws_ecs_task_definition" "frontend" {
 
   tags = local.common_tags
 }
+*/
 
 # ECS Service for Backend
 resource "aws_ecs_service" "backend" {
@@ -303,7 +306,8 @@ resource "aws_ecs_service" "backend" {
   tags = local.common_tags
 }
 
-# ECS Service for Frontend
+# ECS Service for Frontend (DEPRECATED - Using App Runner)
+/*
 resource "aws_ecs_service" "frontend" {
   name            = "${local.name_prefix}-frontend"
   cluster         = aws_ecs_cluster.main.id
@@ -311,10 +315,7 @@ resource "aws_ecs_service" "frontend" {
   desired_count   = var.min_capacity
   launch_type     = "FARGATE"
 
-  # Enable ECS Exec for debugging
   enable_execute_command = true
-
-  # Give the service time to warm up before health checks fail it
   health_check_grace_period_seconds = 60
 
   network_configuration {
@@ -333,6 +334,7 @@ resource "aws_ecs_service" "frontend" {
 
   tags = local.common_tags
 }
+*/
 
 # Auto Scaling Target for Backend
 resource "aws_appautoscaling_target" "backend" {
@@ -359,7 +361,8 @@ resource "aws_appautoscaling_policy" "backend" {
   }
 }
 
-# Auto Scaling Target for Frontend
+# Auto Scaling for Frontend (DEPRECATED - Using App Runner auto-scaling)
+/*
 resource "aws_appautoscaling_target" "frontend" {
   max_capacity       = var.max_capacity
   min_capacity       = var.min_capacity
@@ -368,7 +371,6 @@ resource "aws_appautoscaling_target" "frontend" {
   service_namespace  = "ecs"
 }
 
-# Auto Scaling Policy for Frontend
 resource "aws_appautoscaling_policy" "frontend" {
   name               = "${local.name_prefix}-frontend-scaling"
   policy_type        = "TargetTrackingScaling"
@@ -383,6 +385,7 @@ resource "aws_appautoscaling_policy" "frontend" {
     target_value = var.target_cpu_utilization
   }
 }
+*/
 
 # CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "backend" {

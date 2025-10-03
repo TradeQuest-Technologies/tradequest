@@ -38,7 +38,8 @@ resource "aws_lb_target_group" "backend" {
   tags = local.common_tags
 }
 
-# Target Group for Frontend
+# Target Group for Frontend (DEPRECATED - Using App Runner)
+/*
 resource "aws_lb_target_group" "frontend" {
   name        = "${local.name_prefix}-frontend-tg-v2"
   port        = 3000
@@ -60,6 +61,7 @@ resource "aws_lb_target_group" "frontend" {
 
   tags = local.common_tags
 }
+*/
 
 # ALB Listener for Backend API
 resource "aws_lb_listener" "backend" {
@@ -75,7 +77,7 @@ resource "aws_lb_listener" "backend" {
   tags = local.common_tags
 }
 
-# ALB Listener for Frontend
+# ALB Listener for HTTP port 80 (Backend API only)
 resource "aws_lb_listener" "frontend" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -83,13 +85,13 @@ resource "aws_lb_listener" "frontend" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend.arn
+    target_group_arn = aws_lb_target_group.backend.arn
   }
 
   tags = local.common_tags
 }
 
-# HTTPS Listener (if certificate is provided)
+# HTTPS Listener for port 443 (Backend API only)
 resource "aws_lb_listener" "frontend_https" {
   count = var.certificate_arn != "" ? 1 : 0
 
@@ -101,49 +103,7 @@ resource "aws_lb_listener" "frontend_https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend.arn
-  }
-
-  tags = local.common_tags
-}
-
-# HTTP to HTTPS redirect is handled by the frontend listener above
-
-# Listener Rule: Route /api/* to backend (HTTP)
-resource "aws_lb_listener_rule" "backend_http" {
-  listener_arn = aws_lb_listener.frontend.arn
-  priority     = 100
-
-  action {
-    type             = "forward"
     target_group_arn = aws_lb_target_group.backend.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/api/*"]
-    }
-  }
-
-  tags = local.common_tags
-}
-
-# Listener Rule: Route /api/* to backend (HTTPS)
-resource "aws_lb_listener_rule" "backend_https" {
-  count = var.certificate_arn != "" ? 1 : 0
-  
-  listener_arn = aws_lb_listener.frontend_https[0].arn
-  priority     = 100
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.backend.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/api/*"]
-    }
   }
 
   tags = local.common_tags
