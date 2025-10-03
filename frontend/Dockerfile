@@ -1,49 +1,46 @@
-# Multi-stage build for production
-FROM node:18-alpine as builder
+# syntax=docker/dockerfile:1
 
-# Set working directory
+# Build stage
+FROM node:18-alpine AS builder
+
 WORKDIR /app
 
-# Copy package files
+# Install dependencies
 COPY package*.json ./
-
-# Install dependencies (including dev dependencies for build)
 RUN npm ci && npm cache clean --force
 
 # Copy source code
 COPY . .
 
-# Build the application
+# Build Next.js in standalone mode
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine as production
+FROM node:18-alpine AS production
 
-# Set working directory
 WORKDIR /app
 
-# Install curl for health checks
+# Install curl for healthchecks
 RUN apk add --no-cache curl
-
-# Copy built application from builder stage
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001 && \
-    chown -R nextjs:nodejs /app
+    adduser -S nextjs -u 1001
 
+# Copy standalone server and dependencies
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Switch to non-root user
 USER nextjs
 
-# Expose port
+# Expose port 3000
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/ || exit 1
+# Set production environment
+ENV NODE_ENV=production
+ENV PORT=3000
 
-# Start Next.js (defaults to port 3000)
-CMD ["npm", "start"]
+# Start the Next.js server with logging
+CMD ["sh", "-c", "echo 'Starting Next.js standalone server...'; ls -la /app/ | head -20; echo 'Running: node server.js'; node server.js"]
