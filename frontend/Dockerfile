@@ -40,4 +40,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:3000/ || exit 1
 
 # Start Next.js with explicit binding to all interfaces
-CMD ["npx", "next", "start", "-p", "3000", "-H", "0.0.0.0"]
+CMD ["sh", "-c", "echo 'Starting Next.js...'; echo 'Node:' $(node -v); ls -la | head; echo 'Executing: npx next start -p 3000 -H 0.0.0.0'; exec npx next start -p 3000 -H 0.0.0.0 2>&1"]

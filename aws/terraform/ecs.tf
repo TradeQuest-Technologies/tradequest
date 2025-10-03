@@ -66,6 +66,37 @@ resource "aws_iam_role_policy_attachment" "ecs_task_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# Explicit CloudWatch Logs policy for task execution
+resource "aws_iam_policy" "ecs_task_execution_logs" {
+  name        = "${local.name_prefix}-ecs-task-execution-logs"
+  description = "Explicit CloudWatch Logs permissions for ECS task execution"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:CreateLogGroup",
+          "logs:DescribeLogStreams"
+        ]
+        Resource = [
+          "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/*:*"
+        ]
+      }
+    ]
+  })
+
+  tags = local.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_logs" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = aws_iam_policy.ecs_task_execution_logs.arn
+}
+
 # Custom policy for Secrets Manager access
 resource "aws_iam_policy" "ecs_task_execution_secrets" {
   name        = "${local.name_prefix}-ecs-task-execution-secrets"
