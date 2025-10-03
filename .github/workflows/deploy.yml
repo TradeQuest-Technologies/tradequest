@@ -107,30 +107,28 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
     
-    - name: Deploy to ECS
+    - name: Deploy Backend to ECS
       env:
         ECS_SERVICE_BACKEND: tradequest-prod-backend
-        ECS_SERVICE_FRONTEND: tradequest-prod-frontend
         ECS_CLUSTER: tradequest-cluster
-        ECS_TASK_DEFINITION_BACKEND: tradequest-prod-backend
-        ECS_TASK_DEFINITION_FRONTEND: tradequest-prod-frontend
       run: |
         # Update backend service
         aws ecs update-service \
           --cluster $ECS_CLUSTER \
           --service $ECS_SERVICE_BACKEND \
           --force-new-deployment
-        
-        # Update frontend service
-        aws ecs update-service \
-          --cluster $ECS_CLUSTER \
-          --service $ECS_SERVICE_FRONTEND \
-          --force-new-deployment
     
-    - name: Wait for deployment
+    - name: Deploy Frontend to App Runner
+      env:
+        APPRUNNER_SERVICE_ARN: arn:aws:apprunner:us-east-1:759316875712:service/tradequest-prod-frontend/6074ea5e13f545de818a7454124e4818
+      run: |
+        # Trigger App Runner deployment (it auto-deploys when new image is pushed to ECR with :latest tag)
+        echo "Frontend will auto-deploy via App Runner when it detects new :latest image in ECR"
+        echo "App Runner service: $APPRUNNER_SERVICE_ARN"
+    
+    - name: Wait for Backend Deployment
       env:
         ECS_SERVICE_BACKEND: tradequest-prod-backend
-        ECS_SERVICE_FRONTEND: tradequest-prod-frontend
         ECS_CLUSTER: tradequest-cluster
       run: |
         # Wait for backend service to stabilize
@@ -138,12 +136,14 @@ jobs:
           --cluster $ECS_CLUSTER \
           --services $ECS_SERVICE_BACKEND
         
-        # Wait for frontend service to stabilize
-        aws ecs wait services-stable \
-          --cluster $ECS_CLUSTER \
-          --services $ECS_SERVICE_FRONTEND
+        echo "Backend deployment completed!"
     
     - name: Get deployment info
       run: |
-        echo "Deployment completed successfully!"
-        echo "Application URL: $(aws elbv2 describe-load-balancers --query 'LoadBalancers[0].DNSName' --output text)"
+        echo "✅ Deployment completed successfully!"
+        echo ""
+        echo "🌐 Frontend: https://www.tradequest.tech (App Runner)"
+        echo "🔧 Backend API: https://api.tradequest.tech (ECS Fargate)"
+        echo ""
+        echo "Note: App Runner auto-deploys when it detects the new :latest tag in ECR"
+        echo "Frontend deployment may take an additional 2-3 minutes to complete"
