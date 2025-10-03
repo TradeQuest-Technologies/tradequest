@@ -109,6 +109,46 @@ resource "aws_lb_listener" "frontend_https" {
 
 # HTTP to HTTPS redirect is handled by the frontend listener above
 
+# Listener Rule: Route /api/* to backend (HTTP)
+resource "aws_lb_listener_rule" "backend_http" {
+  listener_arn = aws_lb_listener.frontend.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/*"]
+    }
+  }
+
+  tags = local.common_tags
+}
+
+# Listener Rule: Route /api/* to backend (HTTPS)
+resource "aws_lb_listener_rule" "backend_https" {
+  count = var.certificate_arn != "" ? 1 : 0
+  
+  listener_arn = aws_lb_listener.frontend_https[0].arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/*"]
+    }
+  }
+
+  tags = local.common_tags
+}
+
 # Route 53 Record (if domain is provided)
 resource "aws_route53_record" "main" {
   count = var.domain_name != "" ? 1 : 0

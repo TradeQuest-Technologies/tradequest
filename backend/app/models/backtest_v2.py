@@ -3,7 +3,7 @@ Enhanced Backtesting Models v2
 Supports: Block-based strategies, ML models, walk-forward validation, artifacts, versioning
 """
 
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Integer, Float, Boolean
+from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Integer, Float, Boolean, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid

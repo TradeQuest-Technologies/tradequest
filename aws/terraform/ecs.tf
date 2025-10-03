@@ -114,13 +114,17 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "SECRETS_MANAGER_SECRET_NAME"
           value = aws_secretsmanager_secret.app_secrets.name
+        },
+        {
+          name  = "ALLOWED_HOSTS"
+          value = "*"
         }
       ]
 
       secrets = [
         {
           name      = "DATABASE_URL"
-          valueFrom = "${aws_secretsmanager_secret.database.arn}:username::"
+          valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
         },
         {
           name      = "DATABASE_PASSWORD"
