@@ -7,8 +7,12 @@ export default function RiskDisclaimerPage() {
       <header className="border-b border-white/10 bg-white/5 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-white">
-              TradeQuest
+            <Link href="/">
+              <img
+                src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
+                alt="TradeQuest"
+                className="h-10 w-auto"
+              />
             </Link>
             <Link
               href="/auth"

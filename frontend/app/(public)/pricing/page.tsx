@@ -101,7 +101,13 @@ export default function PublicPricingPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Link href="/" className="text-2xl font-bold text-white">TradeQuest</Link>
+                <Link href="/">
+                  <img
+                    src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
+                    alt="TradeQuest"
+                    className="h-10 w-auto"
+                  />
+                </Link>
               </div>
             </div>
             <div className="hidden md:block">

@@ -70,7 +70,13 @@ export default function PublicLandingPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-2xl font-bold text-white">TradeQuest</h1>
+                <Link href="/">
+                  <img
+                    src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
+                    alt="TradeQuest"
+                    className="h-10 w-auto"
+                  />
+                </Link>
               </div>
             </div>
             <div className="hidden md:block">
@@ -115,10 +121,10 @@ export default function PublicLandingPage() {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-7xl font-bold text-white mb-6"
+              className="text-5xl md:text-7xl font-bold mb-6"
             >
-              Stop Losing.{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-bright-yellow">
+              <span className="text-white">Stop Losing.</span>{" "}
+              <span className="text-brand-bright-yellow">
                 Start Learning.
               </span>
             </motion.h1>
@@ -155,7 +161,7 @@ export default function PublicLandingPage() {
       </section>
 
       {/* Feature Highlights */}
-      <section className="py-20 bg-gray-800/50">
+      <section className="py-20 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
@@ -190,7 +196,7 @@ export default function PublicLandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-gray-900">
+      <section className="py-20 bg-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
@@ -262,7 +268,11 @@ export default function PublicLandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
             <div>
-              <h3 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-bright-yellow">TradeQuest</h3>
+              <img
+                src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
+                alt="TradeQuest"
+                className="h-10 w-auto mb-4"
+              />
               <p className="text-gray-400 leading-relaxed">
                 The trading platform that focuses on education, discipline, and continuous improvement.
               </p>
