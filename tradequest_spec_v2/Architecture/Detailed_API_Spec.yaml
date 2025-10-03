@@ -1,0 +1,327 @@
+openapi: 3.0.3
+info:
+  title: TradeQuest API — Detailed Spec (MVP)
+  version: 1.0.0
+servers:
+  - url: https://api.atqventures.com
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: tq_session
+  schemas:
+    Error:
+      type: object
+      required: [error, code]
+      properties:
+        error: {type: string, example: "validation_error"}
+        code: {type: integer, example: 422}
+        message: {type: string, example: "Missing required field: symbol"}
+        request_id: {type: string, example: "req_01HGWJ..."}
+    Candle:
+      type: object
+      required: [ts,o,h,l,c,v]
+      properties:
+        ts: {type: string, format: date-time}
+        o: {type: number}
+        h: {type: number}
+        l: {type: number}
+        c: {type: number}
+        v: {type: number}
+    Trade:
+      type: object
+      required: [id,account,venue,symbol,side,qty,avg_price,filled_at]
+      properties:
+        id: {type: string}
+        account: {type: string, example: "spot"}
+        venue: {type: string, example: "KRAKEN"}
+        symbol: {type: string, example: "BTC/USDT"}
+        side: {type: string, enum: ["buy","sell"]}
+        qty: {type: number}
+        avg_price: {type: number}
+        fees: {type: number, default: 0}
+        pnl: {type: number, default: 0}
+        submitted_at: {type: string, format: date-time, nullable: true}
+        filled_at: {type: string, format: date-time}
+        order_ref: {type: string, nullable: true}
+        session_id: {type: string, nullable: true}
+        raw: {type: object, nullable: true}
+    StrategySpec:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          enum: [sma_cross, rsi_revert, atr_trail]
+        params:
+          type: object
+          additionalProperties: true
+          example: {"fast": 10, "slow": 50}
+        fees_bps: {type: number, default: 2.0}
+        slip_bps: {type: number, default: 2.0}
+    BacktestResult:
+      type: object
+      required: [metrics,equity_curve,trades,monte_carlo]
+      properties:
+        metrics:
+          type: object
+          properties:
+            total_return_pct: {type: number}
+            sharpe_simple: {type: number}
+            max_dd_pct: {type: number}
+            win_rate: {type: number}
+            trades: {type: integer}
+        equity_curve:
+          type: array
+          items:
+            type: object
+            properties:
+              ts: {type: string, format: date-time}
+              eq: {type: number}
+        trades:
+          type: array
+          items:
+            type: object
+            properties:
+              entry_ts: {type: string, format: date-time}
+              exit_ts: {type: string, format: date-time}
+              entry: {type: number}
+              exit: {type: number}
+              rtn: {type: number}
+        monte_carlo:
+          type: object
+          properties:
+            median: {type: number}
+            p05: {type: number}
+            p95: {type: number}
+security:
+  - cookieAuth: []
+paths:
+  /auth/magic-link:
+    post:
+      tags: [auth]
+      summary: Request magic link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: {type: string, format: email}
+      responses:
+        "200": {description: Sent}
+        "429":
+          description: Rate-limited
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Error"}
+  /auth/consume:
+    post:
+      tags: [auth]
+      summary: Exchange token for session
+      responses:
+        "200": {description: OK}
+        "400":
+          description: Invalid/expired
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Error"}
+
+  /billing/checkout:
+    post:
+      tags: [billing]
+      summary: Create Stripe checkout session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan]
+              properties:
+                plan: {type: string, enum: [free, plus, pro]}
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url: {type: string}
+
+  /broker/connect/{venue}:
+    post:
+      tags: [broker]
+      summary: Store encrypted keys (read-only)
+      parameters:
+        - name: venue
+          in: path
+          required: true
+          schema: {type: string, enum: [kraken, coinbase]}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [api_key, api_secret]
+              properties:
+                api_key: {type: string}
+                api_secret: {type: string}
+      responses:
+        "200": {description: ok}
+        "400":
+          description: invalid scope/failed test call
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Error"}
+
+  /broker/fills:
+    get:
+      tags: [broker]
+      summary: List normalized fills
+      parameters:
+        - {name: user_id, in: query, required: true, schema: {type: string}}
+        - {name: venue, in: query, required: true, schema: {type: string}}
+        - {name: start, in: query, schema: {type: string, format: date-time}}
+        - {name: end, in: query, schema: {type: string, format: date-time}}
+        - {name: symbols, in: query, schema: {type: string, example: "BTC/USDT,ETH/USDT"}}
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Trade"}
+
+  /market/ohlcv:
+    get:
+      tags: [market]
+      summary: Fetch OHLCV
+      parameters:
+        - {name: symbol, in: query, required: true, schema: {type: string}}
+        - {name: tf, in: query, required: true, schema: {type: string, enum: ["1m","5m","15m","1h","4h","1d"]}}
+        - {name: limit, in: query, schema: {type: integer, default: 500}}
+      responses:
+        "200":
+          description: Candle[]
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: "#/components/schemas/Candle"}}
+
+  /market/context:
+    post:
+      tags: [market]
+      summary: Candles around a trade
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [trade]
+              properties:
+                trade: {$ref: "#/components/schemas/Trade"}
+                tf: {type: string, default: "1m"}
+                pre_mins: {type: integer, default: 30}
+                post_mins: {type: integer, default: 60}
+      responses:
+        "200": {description: Context window}
+
+  /journal/ingest_csv:
+    post:
+      tags: [journal]
+      summary: Upload CSV trades
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200": {description: count}
+
+  /journal/trades:
+    get:
+      tags: [journal]
+      summary: Filtered trades list
+      parameters:
+        - {name: filters, in: query, schema: {type: string}}
+        - {name: limit, in: query, schema: {type: integer, default: 200}}
+        - {name: page, in: query, schema: {type: integer, default: 1}}
+      responses:
+        "200":
+          description: Trade[]
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Trade"}
+
+  /journal/entry:
+    post:
+      tags: [journal]
+      summary: Create journal entry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, note]
+              properties:
+                user_id: {type: string}
+                trade_id: {type: string, nullable: true}
+                note: {type: string}
+                tags: {type: array, items: {type: string}}
+      responses:
+        "200": {description: ok}
+
+  /backtest/run:
+    post:
+      tags: [backtest]
+      summary: Backtest on uploaded OHLCV
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [symbol, ohlcv_csv_base64, strategy]
+              properties:
+                symbol: {type: string}
+                ohlcv_csv_base64: {type: string}
+                strategy: {$ref: "#/components/schemas/StrategySpec"}
+      responses:
+        "200":
+          description: Metrics & curves
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BacktestResult"}
+
+  /backtest/quick:
+    post:
+      tags: [backtest]
+      summary: Backtest on live-fetched OHLCV
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [symbol, tf, strategy]
+              properties:
+                symbol: {type: string}
+                tf: {type: string, enum: ["1m","5m","15m","1h","4h","1d"]}
+                lookback_bars: {type: integer, default: 2000}
+                strategy: {$ref: "#/components/schemas/StrategySpec"}
+      responses:
+        "200":
+          description: Metrics & curves
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BacktestResult"}

@@ -1,0 +1,287 @@
+Terms of Service
+
+Last updated: September 28, 2025
+
+These Terms of Service (“Terms”) are a binding agreement between Tradequest Technologies Inc., a Delaware corporation, d/b/a TradeQuest (“Company,” “we,” “us,” or “our”) and you (“you” or “User”). By accessing or using our websites, apps, APIs, or related services (collectively, the “Service”), you agree to these Terms. If you do not agree, do not use the Service.
+
+1) What we do (educational software; not a broker)
+
+We provide subscription software for trade journaling, analytics, backtesting, and AI-assisted reviews via read-only broker integrations (the “Platform”). We do not provide investment, legal, tax, accounting, or other professional advice, and we are not a broker-dealer, investment adviser, exchange, ATS, or money transmitter. The Service is educational and for information only.
+
+2) Eligibility; accounts; security
+
+Age. You must be 16+ to use the Service. If you are under 18, you may use the Service only with parent/guardian consent and where permitted by law.
+
+Account security. You are responsible for maintaining the confidentiality of your credentials, enabling 2FA, and all activity under your account. Notify us promptly of unauthorized use.
+
+Accuracy. You agree your registration and profile information is accurate and kept updated.
+
+3) Subscriptions; billing; refunds
+
+Charge timing. Paid plans are billed at checkout (monthly or annual) in USD via our payment processor (e.g., Stripe). Taxes may apply.
+
+Auto-renewal & cancellation. Subscriptions renew until canceled in your Account. Cancellation stops future renewals; it doesn’t refund time already used unless our refund policy applies.
+
+Refund policy (baseline). First-time purchases are refundable within 7 days upon request to support@tradequest.tech
+. Renewals are generally non-refundable except where required by law.
+
+Price/features changes. We may change prices or features prospectively; we’ll notify you before changes affecting your next renewal.
+
+4) Strict “no advice” + risk disclosures
+
+No advice or recommendations. Content, analytics, and AI outputs are not investment advice or a solicitation to buy/sell any security, digital asset, or instrument.
+
+No guarantees. Backtests and simulations are hypothetical and may differ materially from actual results. Past performance is not indicative of future results.
+
+Your risk. Trading involves risk, including total loss. You alone are responsible for your trades and outcomes.
+
+5) Broker connections; data sources
+
+Read-only keys only. Integrations require read-only API keys. Never grant withdrawal/transfer permissions. You are responsible for key management.
+
+Third parties. Broker APIs, market data, and third-party services are outside our control and may be inaccurate, delayed, incomplete, or unavailable.
+
+No execution. We do not place, route, or execute orders.
+
+6) Acceptable use
+
+You agree not to: (a) use the Service for unlawful purposes or market abuse; (b) violate third-party terms or IP rights; (c) scrape at scale or reverse engineer; (d) circumvent security or plan limits; (e) upload malware or unlawful content; (f) attempt to access others’ accounts or data. We may suspend or terminate access for violations or to protect the Service and users.
+
+7) Ownership; your license to use
+
+We and our licensors own the Service (software, designs, data excluding your content). Subject to these Terms and payment of fees, we grant you a limited, revocable, nonexclusive, nontransferable license to use the Service for personal or internal business educational use.
+
+8) Your content; license to us
+
+You retain rights to content you upload (e.g., trade logs, notes, files). You grant us a worldwide, royalty-free license to host, process, analyze, display, and create derivative insights solely to operate and improve the Service; comply with law; and enforce these Terms. You represent you have rights to your content.
+
+9) AI features; model outputs
+
+AI may produce inaccurate or offensive outputs. Verify results before relying on them. You are responsible for how you use AI outputs. We may use anonymized telemetry to improve quality only if you opt in (see Privacy Policy).
+
+10) Beta/preview features
+
+Alpha/beta features may be unstable or changed/removed. Use at your sole risk.
+
+11) Feedback
+
+If you give feedback, you grant us a perpetual, irrevocable, worldwide license to use it without restriction or compensation.
+
+12) Privacy
+
+Our Privacy Policy is incorporated by reference and explains how we collect, use, and share data.
+
+13) Third-party links/services
+
+We are not responsible for third-party websites, services, or terms.
+
+14) Export & sanctions
+
+You will not use the Service in violation of export-control or sanctions laws and represent you are not located in, or a resident of, embargoed or sanctioned jurisdictions (including Cuba, Iran, North Korea, Syria, and the Crimea/Donetsk/Luhansk regions of Ukraine) or otherwise on a restricted list.
+
+15) Disclaimers
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SERVICE IS PROVIDED “AS IS” AND “AS AVAILABLE,” WITHOUT WARRANTIES OF ANY KIND, EXPRESS, IMPLIED, OR STATUTORY (INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, ACCURACY, AVAILABILITY). WE DO NOT WARRANT RESULTS, ANALYTICS, OR AI OUTPUTS WILL BE ERROR-FREE OR UNINTERRUPTED.
+
+16) Limitation of liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE WILL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES; LOST PROFITS/REVENUE/GOODWILL/DATA; OR TRADING LOSSES. OUR TOTAL LIABILITY FOR ALL CLAIMS WILL NOT EXCEED THE AMOUNTS YOU PAID US FOR THE SERVICE IN THE 6 MONTHS BEFORE THE EVENT GIVING RISE TO LIABILITY. SOME JURISDICTIONS LIMIT SUCH EXCLUSIONS; IN THOSE, WE LIMIT LIABILITY TO THE MINIMUM EXTENT PERMITTED. NOTHING LIMITS LIABILITY FOR WILLFUL MISCONDUCT OR FRAUD.
+
+17) Indemnification
+
+You will defend, indemnify, and hold harmless Company and its affiliates, officers, directors, employees, and agents from claims and expenses (including reasonable attorneys’ fees) arising from your use of the Service, your content, your breach of these Terms, or violation of law/third-party rights.
+
+18) Term; termination
+
+We may suspend or terminate access at any time to protect users or the Service, or for material violations. You may stop using the Service at any time. Sections that by nature should survive (ownership, disclaimers, limits, indemnity, disputes) survive termination.
+
+19) Changes
+
+We may change the Service or these Terms. If changes are material, we will notify you (e.g., email or in-app). Continued use after the effective date means acceptance.
+
+20) Governing law; venue
+
+These Terms are governed by the laws of Delaware, USA, without regard to conflicts rules. Subject to the arbitration section, courts located in Wilmington, Delaware have exclusive jurisdiction.
+
+21) Disputes; binding arbitration; class waiver
+
+Informal resolution first. Email legal@tradequest.tech
+; we’ll try to resolve within 30 days.
+
+Arbitration. Except for small-claims matters or injunctive relief, disputes will be resolved by binding arbitration administered by the American Arbitration Association (AAA) under its rules. Seat: Wilmington, Delaware. Language: English.
+
+Class waiver. Disputes are on an individual basis only; no class or representative actions.
+
+Opt-out. You may opt out of arbitration/class waiver within 30 days of account creation by emailing legal@tradequest.tech
+ with subject “Arbitration Opt-Out.”
+
+22) Notices; contact
+
+We may send notices electronically to your registered email or in-app. Legal notices to us must be sent to:
+
+Tradequest Technologies Inc. (d/b/a TradeQuest)
+1007 N Orange St, 4th Floor, Suite #4242
+Wilmington, Delaware 19801, United States
+Email: legal@tradequest.tech
+
+23) Miscellaneous
+
+Entire agreement (these Terms + Privacy Policy); severability; no waiver; assignment (you may not assign without consent; we may assign); force majeure; headings are for convenience only.
+
+Privacy Policy
+
+Last updated: September 28, 2025
+
+Tradequest Technologies Inc., d/b/a TradeQuest (“we,” “us,” “our”) provides this Privacy Policy to explain how we collect, use, share, and protect personal information when you use our websites, apps, APIs, and services (the “Service”).
+
+If you do not agree, do not use the Service.
+
+1) Who we are & contact
+
+Controller: Tradequest Technologies Inc., a Delaware corporation (d/b/a TradeQuest)
+
+Address: 1007 N Orange St, 4th Floor, Suite #4242, Wilmington, DE 19801, USA
+
+Email (support): support@tradequest.tech
+
+Email (privacy/DPO contact): privacy@tradequest.tech
+
+2) Information we collect
+Provided by you
+
+Account & contact: email, alias, timezone.
+
+Security: optional password, 2FA secret (hashed/encrypted).
+
+Trading data: trade logs, notes, uploaded files/screenshots.
+
+Broker keys: read-only API keys you provide (stored encrypted).
+
+Preferences: goals, risk rules, notification/coach/backtest settings.
+
+Support: messages, attachments.
+
+Collected automatically
+
+Technical: IP address, device/browser info, operating system, language, referral URL.
+
+Usage: pages visited, features used, events (e.g., imports, backtests), timestamps.
+
+Cookies: essential cookies for login/session; preference cookies; (if enabled) analytics cookies.
+
+From third parties
+
+Payments: limited billing info (from Stripe) such as transaction IDs and status (we don’t store full card numbers).
+
+Messaging: your Telegram user ID if you link alerts.
+
+Brokers: fills/positions only if you connect read-only keys.
+
+We do not intentionally collect sensitive categories (e.g., health, biometrics). Please do not upload others’ personal data without permission.
+
+3) How we use information
+
+Provide the Service: authenticate, sync broker data (read-only), journal, analytics, backtests, alerts, reports.
+
+Improve & secure: troubleshoot, protect against abuse, measure performance, develop new features.
+
+Communicate: transactional emails (logins, receipts, alerts), customer support.
+
+Marketing (optional): only with your opt-in; unsubscribe anytime.
+
+Legal compliance: enforce Terms, comply with law, and protect rights, property, and safety.
+
+AI features
+
+We may send data (e.g., trade context) to AI processing providers to generate outputs only to provide the Service. For product/model quality, we use anonymized telemetry only if you opt in.
+
+4) Legal bases (EEA/UK)
+
+Where GDPR/UK GDPR applies, we process data based on:
+
+Contract (to provide the Service),
+
+Legitimate interests (security, improvement, fraud prevention),
+
+Consent (marketing emails, optional telemetry), and
+
+Legal obligation (tax, accounting, compliance).
+
+5) Sharing & disclosures
+
+We share data with:
+
+Service providers/subprocessors under contract to process data on our behalf, including:
+
+Payments: Stripe
+
+Email delivery: reputable email service provider
+
+Error tracking: reputable error tracking provider
+
+Analytics (privacy-centric): product analytics provider
+
+AI processing: a hosted AI API provider (for tool-based features)
+
+Messaging: Telegram Bot API (if you link)
+
+Hosting/infra: US-based hosting/VPS and storage providers
+
+Legal/compliance: if required by law or to protect rights/safety.
+
+Corporate transactions: as part of a merger, acquisition, financing, or sale of assets (with notice).
+
+We do not sell or share personal information for cross-context behavioral advertising.
+
+6) International transfers
+
+We primarily store data in the United States. If we transfer data internationally, we use appropriate safeguards (e.g., Standard Contractual Clauses) where required.
+
+7) Retention
+
+We retain personal data for as long as necessary to provide the Service, comply with law, resolve disputes, and enforce agreements. Backups are generally retained ~30 days. You can request deletion (see Your Rights).
+
+8) Your choices & rights
+
+Access, correct, delete, export. You can access and manage most data in-app or by emailing privacy@tradequest.tech
+.
+
+Marketing opt-out. Unsubscribe via link in emails or in settings.
+
+Cookies. You can control cookies in your browser; essential cookies are required for login.
+
+EEA/UK residents: You may have GDPR rights (access, rectification, erasure, restriction, portability, objection); you can lodge a complaint with your local data authority.
+
+California residents: We honor CCPA/CPRA rights (know/delete/correct/opt-out of “sale or share”—we do not sell/share PI; limit use of sensitive PI—not applicable as we don’t use sensitive PI).
+
+9) Security
+
+We use reasonable technical and organizational measures, including:
+
+Encryption in transit (TLS) and at rest for sensitive fields (e.g., AES-GCM for broker keys),
+
+httpOnly, secure cookies; CSRF protection; rate limiting; access controls; audit logging,
+
+Least-privilege access for staff and systems.
+
+No method is 100% secure; if we learn of a breach affecting your data, we will notify you without undue delay consistent with law.
+
+10) Children’s privacy
+
+The Service is not intended for children under 16. If we learn we collected data from a child under 16, we will delete it.
+
+11) Third-party links
+
+We are not responsible for third-party sites/services. Review their privacy policies.
+
+12) Changes to this Policy
+
+We may update this Privacy Policy. We will post the new version with the “Last updated” date and, for material changes, provide notice (e.g., email or in-app).
+
+13) Contact us
+
+Tradequest Technologies Inc. (d/b/a TradeQuest)
+1007 N Orange St, 4th Floor, Suite #4242
+Wilmington, Delaware 19801, United States
+Support: support@tradequest.tech
+ • Privacy: privacy@tradequest.tech

@@ -1,0 +1,59 @@
+openapi: 3.0.0
+info:
+  title: TradeQuest API (MVP)
+  version: 1.0.0
+paths:
+  /auth/magic-link:
+    post:
+      summary: Request magic link
+  /auth/consume:
+    post:
+      summary: Exchange token for session
+  /billing/checkout:
+    post:
+      summary: Create Stripe checkout session
+  /billing/webhook:
+    post:
+      summary: Stripe webhook
+  /broker/connect/{venue}:
+    post:
+      summary: Store encrypted keys (read-only)
+  /broker/fills:
+    get:
+      summary: List normalized fills
+  /market/ohlcv:
+    get:
+      summary: Fetch OHLCV
+  /market/context:
+    post:
+      summary: Candles around a trade
+  /journal/ingest_csv:
+    post:
+      summary: CSV upload
+  /journal/trades:
+    get:
+      summary: Filtered trades list
+  /journal/entry:
+    post:
+      summary: Create journal entry
+  /backtest/run:
+    post:
+      summary: Backtest on uploaded OHLCV
+  /backtest/quick:
+    post:
+      summary: Backtest on live-fetched OHLCV
+  /ai/tools/get_ohlcv:
+    get:
+      summary: Tool - OHLCV
+  /ai/tools/get_trades:
+    get:
+      summary: Tool - recent trades
+  /ai/tools/get_trade_context:
+    post:
+      summary: Tool - context window
+  /ai/tools/backtest_quick:
+    post:
+      summary: Tool - quick backtest
+  /ai/tools/coach_trade:
+    post:
+      summary: Tool - coach a trade

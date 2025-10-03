@@ -1,0 +1,1 @@
+TradeQuest is a subscription-based web platform where traders journal trades, get AI-driven analysis/backtests, and review price action around entries via read-only broker integrations (educational only; no investment advice). We charge customers **at checkout** for monthly or annual plans (no delayed billing).

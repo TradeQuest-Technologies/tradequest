@@ -1,0 +1,185 @@
+Privacy Policy
+
+Last updated: September 28, 2025
+
+Tradequest Technologies Inc., d/b/a “TradeQuest” (“TradeQuest,” “we,” “us,” or “our”) provides this Privacy Policy to explain how we collect, use, share, and protect information when you access our websites, apps, APIs, and related services (collectively, the “Service”).
+
+If you do not agree with this Privacy Policy, please do not use the Service.
+
+Who we are (controller):
+Tradequest Technologies Inc. (d/b/a TradeQuest)
+1007 N Orange St, 4th Floor, Suite #4242, Wilmington, Delaware 19801, United States
+Support: support@tradequest.tech
+ • Privacy: privacy@tradequest.tech
+
+Website: https://tradequest.tech
+
+1) Scope
+
+This Policy covers personal information we process when you use the Service or interact with us (e.g., support). It does not cover third-party websites, services, or practices that we do not control.
+
+2) Information we collect
+A) You provide to us
+
+Account & contact: email, alias, timezone, display preferences.
+
+Security: optional password, 2FA/TOTP setup (stored as hashed/secret values).
+
+Trading data: trade logs, notes, tags, uploaded files/screenshots, journal entries.
+
+Broker API keys (read-only): keys you provide to connect your broker/exchange. We instruct users to never grant withdrawal/transfer permissions. Keys are stored encrypted.
+
+Preferences: goals, risk rules, discipline settings, notification and AI/backtesting preferences.
+
+Support: messages and attachments you send to support@tradequest.tech
+.
+
+B) Automatically collected
+
+Device/technical: IP address, browser/OS, device identifiers, language, referring/exit pages.
+
+Usage & events: pages viewed, features used, timestamps, error logs, job metrics (e.g., imports, backtests).
+
+Cookies & similar: essential session cookies, preference cookies, and (if enabled) privacy-centric analytics cookies. See “Cookies & Tracking” below.
+
+C) From third parties
+
+Payments: limited transaction metadata from our payment processor (e.g., Stripe). We do not store full card numbers.
+
+Messaging: your Telegram user ID when you link alerts.
+
+Brokers/exchanges: fills/positions when you connect read-only keys.
+
+We do not intentionally collect special/sensitive categories of data (e.g., health, biometric). Please avoid uploading others’ personal data without permission.
+
+3) How we use information
+
+Provide the Service: authenticate accounts, import and normalize broker data, journal/analytics/backtests, alerts, reports, account administration.
+
+Improve & secure: monitor performance, debug issues, detect/prevent abuse, develop features, maintain availability.
+
+Communicate: transactional emails (logins, receipts, alerts), service messages, responses to support.
+
+Marketing (optional): send product updates or promotions only if you opt in; unsubscribe anytime.
+
+Legal compliance & protection: enforce Terms, comply with law, and protect rights, property, and safety.
+
+AI features
+
+To deliver AI-powered analyses (e.g., trade context summaries), we may process relevant data (such as candles around a trade, trade logs) with an AI provider under contract. For quality improvement, we use anonymized telemetry only if you opt in. AI outputs may be inaccurate—use judgment.
+
+4) Legal bases (EEA/UK where applicable)
+
+Contract: to provide and administer the Service you request.
+
+Legitimate interests: security, improvement, fraud prevention, analytics compatible with user expectations.
+
+Consent: marketing emails and optional anonymized telemetry.
+
+Legal obligations: tax, accounting, compliance, and responding to lawful requests.
+
+5) Sharing & disclosures
+
+We share personal information only as described below and with appropriate safeguards:
+
+Service providers / subprocessors (on our behalf):
+
+Payments: Stripe (billing and receipts).
+
+Email delivery: a reputable email service for login links/receipts/alerts.
+
+Error tracking & logging: a reputable provider to diagnose issues.
+
+Product analytics (privacy-centric): to understand feature usage at an aggregate level.
+
+AI processing: a hosted AI API provider to generate requested analyses.
+
+Messaging: Telegram Bot API (if you link).
+
+Hosting/infra & storage: US-based compute and storage providers.
+These providers are bound by contracts limiting use of your data to providing services to us.
+
+Legal/compliance: if required by law or in response to a lawful request, to protect our rights or users’ safety, or to enforce our Terms.
+
+Corporate transactions: in connection with merger, acquisition, financing, or sale of assets (we will continue to protect personal data and notify you of material changes).
+
+We do not “sell” or “share” personal information for cross-context behavioral advertising (as those terms are defined under US state privacy laws).
+
+6) International transfers
+
+We primarily store and process data in the United States. When personal data is transferred internationally, we use appropriate safeguards (e.g., Standard Contractual Clauses) where required by law.
+
+7) Retention
+
+We retain personal information for as long as necessary to provide the Service, comply with legal obligations, resolve disputes, and enforce agreements. Backups are generally retained for about 30 days. You can request deletion at any time (see “Your Rights”).
+
+8) Your choices & controls
+
+Access & edits: manage most info in the app; contact privacy@tradequest.tech
+ if you need help.
+
+Marketing emails: opt in/out in settings or via the unsubscribe link. Transactional emails (e.g., login links, receipts) are required.
+
+Cookies & Tracking: you can control cookies via your browser. Essential cookies are required for login/session.
+
+Telemetry for improvement: off by default; you may opt in or out at any time.
+
+Broker keys: you can revoke access at any time from Integrations; we will stop syncing and delete stored keys.
+
+9) Your rights
+
+Depending on where you live, you may have rights such as access, correction, deletion, portability, restriction, and objection.
+
+How to exercise: email privacy@tradequest.tech
+ with your request. We may ask for information to verify your identity.
+
+Response time: we aim to respond within 30 days; for California, within 45 days (extendable as permitted).
+
+California (CCPA/CPRA): we do not sell/share personal information, nor use or disclose “sensitive personal information” for purposes requiring a right to limit. You have rights to know, delete, correct, and non-discrimination.
+
+EEA/UK (GDPR): you may also lodge a complaint with your local data protection authority.
+
+10) Cookies & tracking
+
+We use:
+
+Essential cookies: for authentication, security, and core functionality.
+
+Preferences: to remember settings like theme/timezone.
+
+Analytics (first-party or privacy-centric): to measure aggregate usage (no cross-site advertising tracking).
+
+Do Not Track/GPC: We don’t use data for cross-context behavioral advertising. Where applicable, we treat Global Privacy Control signals as an opt-out of such processing.
+
+11) Security
+
+We use reasonable technical and organizational measures, including:
+
+Encryption in transit (TLS) and at rest for sensitive fields (e.g., AES-GCM for broker keys).
+
+httpOnly, secure cookies, CSRF protections, rate limiting, access controls, and audit logging.
+
+Least-privilege access for staff and systems.
+
+No method is 100% secure. If we learn of a breach affecting your data, we will notify you without undue delay consistent with applicable law.
+
+12) Children’s privacy
+
+The Service is not intended for children under 16. If you believe we have collected data from a child under 16, contact privacy@tradequest.tech
+ and we will delete it.
+
+13) Third-party links
+
+The Service may link to third-party sites or services. Their privacy practices are governed by their own policies; we are not responsible for them.
+
+14) Changes to this Policy
+
+We may update this Policy from time to time. If we make material changes, we will provide notice (e.g., email or in-app). The “Last updated” date reflects the latest version.
+
+15) Contact us
+
+Tradequest Technologies Inc. (d/b/a TradeQuest)
+1007 N Orange St, 4th Floor, Suite #4242
+Wilmington, Delaware 19801, United States
+Support: support@tradequest.tech
+ • Privacy: privacy@tradequest.tech

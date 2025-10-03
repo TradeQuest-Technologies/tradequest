@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom thin scrollbars */
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.3);
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.5);
+  }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.3) transparent;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 15% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 10%;
+    /* Brand primary: Dark Teal #005F73 -> hsl(195 100% 22%) */
+    --primary: 195 100% 22%;
+    --primary-foreground: 210 40% 98%;
+    /* Secondary neutrals */
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 220 15% 10%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
+    /* Brand accent: Bright Yellow #FFC300 -> hsl(46 100% 50%) */
+    --accent: 46 100% 50%;
+    --accent-foreground: 220 15% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    /* Use accent color for focus rings for a futuristic glow */
+    --ring: 46 100% 50%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 220 16% 8%;
+    --foreground: 210 40% 98%;
+    --card: 220 16% 8%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 16% 8%;
+    --popover-foreground: 210 40% 98%;
+    /* Keep brand colors in dark mode */
+    --primary: 195 100% 22%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 220 11% 15%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 220 11% 15%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 46 100% 50%;
+    --accent-foreground: 220 16% 8%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 11% 15%;
+    --input: 220 11% 15%;
+    --ring: 46 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+  .font-brand {
+    font-family: 'Avenir', 'Inter', system-ui, sans-serif;
+  }
+  .font-display-brand {
+    font-family: 'Orbitron', 'Avenir', sans-serif;
+  }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kodchasan:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Avenir:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+@layer base {
+  html {
+    font-family: 'Avenir', 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200;
+  }
+  
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-white text-gray-700 border-gray-300 hover:bg-gray-50 focus:ring-primary-500;
+  }
+  
+  .btn-success {
+    @apply btn bg-success-600 text-white hover:bg-success-700 focus:ring-success-500;
+  }
+  
+  .btn-danger {
+    @apply btn bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  }
+  
+  .input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+  
+  .metric-card {
+    @apply card bg-gradient-to-br from-white to-gray-50;
+  }
+  
+  .metric-value {
+    @apply text-2xl font-bold text-gray-900;
+  }
+  
+  .metric-label {
+    @apply text-sm font-medium text-gray-500 uppercase tracking-wide;
+  }
+  
+  .metric-change {
+    @apply text-sm font-medium;
+  }
+  
+  .metric-change.positive {
+    @apply text-success-600;
+  }
+  
+  .metric-change.negative {
+    @apply text-danger-600;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-dark-teal to-brand-bright-yellow bg-clip-text text-transparent;
+  }
+  
+  .glass {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+  }
+
+  /* Futuristic glow utility */
+  .brand-glow {
+    box-shadow: 0 0 0.5rem rgba(255, 195, 0, 0.25), 0 0 1.25rem rgba(0, 95, 115, 0.35);
+  }
+
+  .hover-card {
+    @apply transition-transform duration-200; 
+  }
+  .hover-card:hover {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
