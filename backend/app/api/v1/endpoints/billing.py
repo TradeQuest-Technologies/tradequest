@@ -67,10 +67,10 @@ async def create_checkout_session(
 ):
     """Create Stripe checkout session"""
     
-    if plan not in ["plus", "pro"]:
+    if plan not in ["plus"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid plan. Must be 'plus' or 'pro'"
+            detail="Invalid plan. Only 'plus' plan is available."
         )
     
     stripe_service = StripeService()

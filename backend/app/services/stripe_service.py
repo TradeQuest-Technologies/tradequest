@@ -24,32 +24,33 @@ class StripeService:
                 "name": "Free",
                 "price": 0,
                 "features": [
-                    "Manual CSV import",
-                    "1 backtest/day",
-                    "Chat read-only tools",
-                    "Basic analytics"
+                    "Up to 50 trades per month",
+                    "Basic trade journal with notes and tags",
+                    "Core performance metrics (Win rate, P&L, Profit factor)",
+                    "Paper trading simulator",
+                    "CSV import/export",
+                    "Basic charts and visualizations",
+                    "5 AI coaching sessions per month",
+                    "Email support"
                 ]
             },
             "plus": {
                 "name": "Plus",
-                "price": 9,
-                "price_id": "price_plus_monthly",  # You'll need to create this in Stripe
+                "price": 29,
+                "price_id": "price_plus_monthly",  # Will be created in Stripe dashboard
                 "features": [
-                    "Broker auto-sync",
-                    "AI coach per trade",
-                    "10 backtests/day",
-                    "Weekly PDF reports"
-                ]
-            },
-            "pro": {
-                "name": "Pro",
-                "price": 19,
-                "price_id": "price_pro_monthly",  # You'll need to create this in Stripe
-                "features": [
-                    "Unlimited backtests",
-                    "Alerts & notifications",
-                    "Shareable strategy cards",
-                    "Priority support"
+                    "Unlimited trades",
+                    "Advanced trade journal with screenshots",
+                    "Comprehensive performance metrics & analytics",
+                    "Unlimited AI trading coach sessions",
+                    "Advanced backtesting studio",
+                    "Custom strategy builder",
+                    "Advanced charts with technical indicators",
+                    "Risk management & discipline alerts",
+                    "PDF reports and analytics export",
+                    "Priority support",
+                    "Custom tags and categories",
+                    "Trade session analysis with heatmaps"
                 ]
             }
         }
@@ -64,8 +65,8 @@ class StripeService:
     ) -> Dict[str, Any]:
         """Create Stripe checkout session"""
         
-        if plan not in ["plus", "pro"]:
-            raise ValueError("Invalid plan for checkout")
+        if plan not in ["plus"]:
+            raise ValueError("Invalid plan for checkout. Only Plus plan is available.")
         
         plan_config = self.plans[plan]
         
