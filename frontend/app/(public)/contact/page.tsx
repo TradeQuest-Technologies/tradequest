@@ -21,9 +21,6 @@ export default function ContactPage() {
               <Link href="/pricing" className="text-gray-200 hover:text-white">
                 Pricing
               </Link>
-              <Link href="/docs" className="text-gray-200 hover:text-white">
-                Docs
-              </Link>
               <Link href="/contact" className="text-white font-semibold">
                 Contact
               </Link>
