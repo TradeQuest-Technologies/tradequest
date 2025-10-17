@@ -69,7 +69,7 @@ export default function MarketExplorerPage() {
 
   const fetchMarketData = async () => {
     try {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
       const response = await fetch('/api/v1/market/symbols', {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -121,7 +121,7 @@ export default function MarketExplorerPage() {
 
   const fetchOHLCVData = async () => {
     try {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
       const response = await fetch(`/api/market/ohlcv/${selectedSymbol}?timeframe=${timeframe}&limit=100`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -157,7 +157,7 @@ export default function MarketExplorerPage() {
 
   const fetchIndicatorData = async () => {
     try {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
       const response = await fetch(`/api/market/indicators/${selectedSymbol}?timeframe=${timeframe}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })

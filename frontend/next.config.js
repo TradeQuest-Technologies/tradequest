@@ -10,19 +10,20 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   },
-  async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
-      },
-      {
-        source: '/uploads/:path*',
-        destination: `${apiUrl}/uploads/:path*`,
-      },
-    ]
-  },
+  // Disabled rewrites - using catch-all API route instead
+  // async rewrites() {
+  //   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  //   return [
+  //     {
+  //       source: '/api/:path*',
+  //       destination: `${apiUrl}/api/:path*`,
+  //     },
+  //     {
+  //       source: '/uploads/:path*',
+  //       destination: `${apiUrl}/uploads/:path*`,
+  //     },
+  //   ]
+  // },
 }
 
 module.exports = nextConfig

@@ -5,37 +5,64 @@ import { Card } from '../ui/Card'
 import { ChartBarIcon, ClockIcon, CheckCircleIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
 import { XCircleIcon } from '@heroicons/react/24/solid'
 import toast from 'react-hot-toast'
+import BacktestResultsModal from './BacktestResultsModal'
 
 interface ResultsViewerProps {
   run: any
+  strategyGraphId?: string  // Filter runs by strategy
+  onNewRun?: (run: any) => void  // Callback for when a new completed run is detected
 }
 
-export default function ResultsViewer({ run }: ResultsViewerProps) {
+export default function ResultsViewer({ run, strategyGraphId, onNewRun }: ResultsViewerProps) {
   const [runs, setRuns] = useState<any[]>([])
   const [selectedRun, setSelectedRun] = useState<any>(null)
   const [showModal, setShowModal] = useState(false)
-  const [notes, setNotes] = useState('')
+  const [selectedRunDetails, setSelectedRunDetails] = useState<any>(null)
+  const [loadingDetails, setLoadingDetails] = useState(false)
+  const [lastCompletedRunId, setLastCompletedRunId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchRuns()
-  }, [])
-
-  useEffect(() => {
-    if (run) {
+    if (strategyGraphId) {
       fetchRuns()
     }
-  }, [run])
+  }, [strategyGraphId])
+
+  useEffect(() => {
+    if (run && run.id) {
+      // Only refetch if run ID changed
+      fetchRuns()
+      
+      // Auto-popup when a run completes
+      if (run.status === 'completed' && run.id !== lastCompletedRunId) {
+        setLastCompletedRunId(run.id)
+        handleRunClick(run)
+        
+        // Notify parent
+        if (onNewRun) {
+          onNewRun(run)
+        }
+      }
+    }
+  }, [run?.id, run?.status])
 
   const fetchRuns = async () => {
+    if (!strategyGraphId) {
+      console.log('[ResultsViewer] No strategy selected, skipping fetch')
+      return
+    }
+    
+    console.log('[ResultsViewer] Fetching runs for strategy:', strategyGraphId)
     try {
       const token = localStorage.getItem('tq_session')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/backtest/v2/runs?limit=50`, {
+      const url = `/api/v1/backtest/v2/runs?limit=50&strategy_graph_id=${strategyGraphId}`
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
       if (response.ok) {
         const data = await response.json()
+        console.log('[ResultsViewer] Fetched', data.length, 'runs for this strategy')
         setRuns(data)
       }
     } catch (error) {
@@ -43,35 +70,31 @@ export default function ResultsViewer({ run }: ResultsViewerProps) {
     }
   }
 
-  const handleRunClick = (run: any) => {
+  const handleRunClick = async (run: any) => {
     setSelectedRun(run)
-    setNotes(run.notes || (run.diagnostics && run.diagnostics.notes) || '')
     setShowModal(true)
-  }
-
-  const handleSaveNotes = async () => {
-    if (!selectedRun) return
-
+    setLoadingDetails(true)
+    
+    // Fetch full run details including trades and equity curve
     try {
       const token = localStorage.getItem('tq_session')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/backtest/v2/runs/${selectedRun.id}/notes`, {
-        method: 'PATCH',
+      const response = await fetch(`/api/v1/backtest/v2/runs/${run.id}`, {
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ notes })
+        }
       })
-
+      
       if (response.ok) {
-        toast.success('Notes saved!')
-        setSelectedRun({ ...selectedRun, notes })
-        fetchRuns()
+        const fullRun = await response.json()
+        setSelectedRunDetails(fullRun)
       } else {
-        toast.error('Failed to save notes')
+        toast.error('Failed to load run details')
       }
     } catch (error) {
-      toast.error('Failed to save notes')
+      console.error('Failed to fetch run details:', error)
+      toast.error('Failed to load run details')
+    } finally {
+      setLoadingDetails(false)
     }
   }
 
@@ -139,9 +162,11 @@ export default function ResultsViewer({ run }: ResultsViewerProps) {
                       <div className="flex items-center gap-3 mb-2">
                         {getStatusIcon(r.status)}
                         <div>
-                          <div className="font-semibold">{r.config?.symbol || 'Unknown'} - {r.config?.timeframe || '?'}</div>
+                          <div className="font-semibold">
+                            Run #{runs.length - runs.indexOf(r)} • {r.strategy_name || 'Unnamed Strategy'}
+                          </div>
                           <div className="text-xs text-muted-foreground">
-                            {new Date(r.created_at).toLocaleString()}
+                            {r.config?.symbol || 'N/A'} • {r.config?.timeframe || 'N/A'} • {new Date(r.created_at).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -182,93 +207,26 @@ export default function ResultsViewer({ run }: ResultsViewerProps) {
         )}
       </div>
 
-      {/* Modal for Run Details */}
-      {showModal && selectedRun ? (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-background rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
-            <div className="p-6 border-b border-border bg-gradient-to-r from-brand-dark-teal/5 to-brand-bright-yellow/5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold mb-1">
-                    {selectedRun.config?.symbol || 'Unknown'} - {selectedRun.config?.timeframe || '?'}
-                  </h3>
-                  <div className="text-sm text-muted-foreground">
-                    {new Date(selectedRun.created_at).toLocaleString()} • Run ID: {selectedRun.id?.substring(0, 8)}
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-muted-foreground hover:text-foreground text-2xl leading-none"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)] custom-scrollbar">
-              {/* Metrics for Successful Runs */}
-              {selectedRun.status === 'completed' && selectedRun.metrics ? (
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <Card className="p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Total Return</div>
-                    <div className={`text-2xl font-bold ${selectedRun.metrics.total_return > 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                      {(selectedRun.metrics.total_return * 100).toFixed(2)}%
-                    </div>
-                  </Card>
-                  <Card className="p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Sharpe Ratio</div>
-                    <div className="text-2xl font-bold">{selectedRun.metrics.sharpe_ratio?.toFixed(2) || 'N/A'}</div>
-                  </Card>
-                  <Card className="p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Total Trades</div>
-                    <div className="text-2xl font-bold">{selectedRun.metrics.total_trades}</div>
-                  </Card>
-                  <Card className="p-4">
-                    <div className="text-sm text-muted-foreground mb-1">Win Rate</div>
-                    <div className="text-2xl font-bold">{(selectedRun.metrics.win_rate * 100).toFixed(0)}%</div>
-                  </Card>
-                </div>
-              ) : null}
-
-              {/* Error Display for Failed Runs */}
-              {selectedRun.status === 'failed' ? (
-                <div className="mb-6">
-                  <div className="p-4 rounded-lg bg-danger-500/10 border border-danger-500/20">
-                    <div className="flex items-start gap-3">
-                      <XCircleIcon className="h-6 w-6 text-danger-600 flex-shrink-0" />
-                      <div>
-                        <div className="font-semibold text-danger-600 mb-1">Backtest Failed</div>
-                        <div className="text-sm text-muted-foreground">
-                          {selectedRun.error_message || (selectedRun.diagnostics && selectedRun.diagnostics.error) || 'Unknown error'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Notes Section */}
-              <div className="mt-6">
-                <label className="block text-sm font-semibold mb-2">Notes</label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add notes about this backtest run..."
-                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-sm min-h-[120px] resize-y"
-                />
-                <button
-                  onClick={handleSaveNotes}
-                  className="mt-3 px-4 py-2 bg-brand-dark-teal text-white rounded-lg hover:bg-brand-dark-teal/90 transition-colors"
-                >
-                  Save Notes
-                </button>
-              </div>
-            </div>
+      {/* Comprehensive Results Modal */}
+      <BacktestResultsModal
+        run={selectedRunDetails || selectedRun}
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setSelectedRun(null)
+          setSelectedRunDetails(null)
+        }}
+      />
+      
+      {/* Loading overlay while fetching details */}
+      {showModal && loadingDetails && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-dark-teal mx-auto mb-4" />
+            <p className="text-center text-gray-700 dark:text-gray-300">Loading backtest details...</p>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }

@@ -275,10 +275,10 @@ async def get_coach_image(
                 raise HTTPException(status_code=404, detail="Image not found")
         else:
             # For local storage, serve file directly
-            full_path = Path(storage_service.workspace_dir) / user_id / session_id / filename
+            full_path = storage_service.coach_dir / user_id / session_id / filename
             
             # Security: Ensure path is within workspace
-            workspace_base = Path(storage_service.workspace_dir) / user_id / session_id
+            workspace_base = storage_service.coach_dir / user_id / session_id
             resolved_path = full_path.resolve()
             workspace_resolved = workspace_base.resolve()
             
@@ -288,7 +288,14 @@ async def get_coach_image(
                 raise HTTPException(status_code=403, detail="Access denied - path outside workspace")
             
             if not resolved_path.exists():
-                logger.error(f"Image not found: {resolved_path}")
+                # List files in directory for debugging
+                parent_dir = resolved_path.parent
+                if parent_dir.exists():
+                    files = list(parent_dir.glob("*"))
+                    logger.error(f"Image not found: {resolved_path}")
+                    logger.error(f"Files in {parent_dir}: {[f.name for f in files]}")
+                else:
+                    logger.error(f"Image not found: {resolved_path} (parent directory doesn't exist)")
                 raise HTTPException(status_code=404, detail="Image not found")
             
             return FileResponse(

@@ -24,6 +24,20 @@ provider "aws" {
   }
 }
 
+# Additional provider for us-east-1 (required for CloudFront ACM certificates)
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+  
+  default_tags {
+    tags = {
+      Project     = "TradeQuest"
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+    }
+  }
+}
+
 # Data sources
 data "aws_availability_zones" "available" {
   state = "available"

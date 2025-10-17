@@ -9,13 +9,24 @@ from datetime import datetime, timedelta
 import structlog
 import math
 import json
+import uuid
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
-from app.schemas.trade import ApiKeyCreate, ApiKeyResponse, TradeResponse
+from app.schemas.trade import TradeResponse
+from app.schemas.broker import (
+    BrokerConnectionRequest,
+    BrokerConnectionResponse,
+    BrokerConnectionInfo,
+    SyncTradesRequest,
+    SyncTradesResponse
+)
 from app.models.user import User
-from app.models.trade import ApiKey, Trade
+from app.models.trade import Trade
+from app.models.api_key import ApiKey
 from app.services.broker import BrokerService
+from app.services.encryption_service import encryption_service
+from app.services.position_matcher import match_and_calculate_pnl
 
 logger = structlog.get_logger()
 
@@ -49,53 +60,170 @@ def safe_raw_value(value):
 
 router = APIRouter()
 
-@router.post("/connect/{venue}", response_model=ApiKeyResponse)
-async def connect_broker(
-    venue: str,
-    api_key_data: ApiKeyCreate,
+@router.get("/list")
+async def get_connections(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Connect a broker account (read-only)"""
+    """Get all broker connections for the current user"""
     
-    if venue not in ["kraken", "coinbase"]:
+    api_keys = db.query(ApiKey).filter(ApiKey.user_id == current_user.id).all()
+    
+    connections = []
+    for api_key in api_keys:
+        # Get trade count for this venue
+        trade_count = db.query(Trade).filter(
+            Trade.user_id == current_user.id,
+            Trade.venue == api_key.venue.upper()
+        ).count()
+        
+        # Decrypt and mask API key for display
+        try:
+            decrypted_key = encryption_service.decrypt(api_key.key_enc)
+            api_key_masked = encryption_service.mask_api_key(decrypted_key)
+        except:
+            api_key_masked = "****"
+        
+        # Extract last sync from meta
+        last_sync_str = api_key.meta.get('last_sync') if api_key.meta else None
+        last_sync = datetime.fromisoformat(last_sync_str) if last_sync_str else None
+        
+        connection_dict = {
+            "id": api_key.id,
+            "venue": api_key.venue,
+            "wallet_address": api_key.meta.get('wallet_address') if api_key.meta else None,
+            "api_key_masked": api_key_masked,
+            "status": "connected",
+            "last_sync": last_sync.isoformat() if last_sync else None,
+            "trade_count": trade_count,
+            "created_at": api_key.created_at.isoformat(),
+            "meta": api_key.meta
+        }
+        connections.append(connection_dict)
+    
+    return connections
+
+@router.post("/connect", response_model=BrokerConnectionResponse)
+async def connect_broker(
+    request: BrokerConnectionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Connect a broker account and store encrypted credentials
+    
+    Supported venues:
+    - hyperliquid: Requires wallet_address (read-only) or wallet_address + private_key (trading)
+    - kraken: Requires api_key + api_secret
+    - coinbase: Use OAuth2 flow instead (call /broker/oauth/coinbase/authorize first)
+    
+    Note: For Coinbase, use the OAuth2 flow endpoints instead of this direct connection.
+    """
+    venue = request.venue.lower()
+    
+    # Validate venue
+    supported_venues = ['hyperliquid', 'kraken']  # Coinbase uses OAuth
+    if venue not in supported_venues:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported venue. Supported: kraken, coinbase"
+            detail=f"Unsupported venue. Supported: {', '.join(supported_venues)}. For Coinbase, use OAuth2 flow."
         )
     
-    # Check if user already has keys for this venue
-    existing_key = db.query(ApiKey).filter(
+    # Check if already connected
+    existing = db.query(ApiKey).filter(
         ApiKey.user_id == current_user.id,
         ApiKey.venue == venue
     ).first()
     
-    if existing_key:
+    if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Already connected to {venue}"
+            detail=f"Already connected to {venue}. Disconnect first to reconnect."
         )
     
-    # TODO: Encrypt API keys before storing
-    # For now, store as plain text (NEVER do this in production!)
-    api_key = ApiKey(
+    # Validate credentials based on venue
+    if venue == 'hyperliquid':
+        if not request.wallet_address:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="wallet_address is required for Hyperliquid"
+            )
+        # Test connection
+        broker_service = BrokerService(
+            venue=venue,
+            api_key=request.private_key,
+            wallet_address=request.wallet_address
+        )
+        
+    elif venue == 'kraken':
+        # Kraken API keys
+        if not request.api_key or not request.api_secret:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="api_key and api_secret are required for Kraken"
+            )
+        broker_service = BrokerService(
+            venue=venue,
+            api_key=request.api_key,
+            api_secret=request.api_secret
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid venue configuration"
+        )
+    
+    # Test connection
+    connection_test = broker_service.test_connection()
+    if not connection_test.get('connected'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Connection test failed: {connection_test.get('error', 'Unknown error')}"
+        )
+    
+    # Store encrypted credentials
+    api_key_id = str(uuid.uuid4())
+    
+    # Encrypt credentials
+    if venue == 'hyperliquid':
+        key_enc = encryption_service.encrypt(request.wallet_address)
+        secret_enc = encryption_service.encrypt(request.private_key or "")  # Empty if read-only
+        api_key_masked = encryption_service.mask_api_key(request.wallet_address, show_chars=6)
+    else:
+        key_enc = encryption_service.encrypt(request.api_key)
+        secret_enc = encryption_service.encrypt(request.api_secret)
+        api_key_masked = encryption_service.mask_api_key(request.api_key)
+    
+    # Create API key record
+    new_api_key = ApiKey(
+        id=api_key_id,
         user_id=current_user.id,
         venue=venue,
-        key_enc=api_key_data.api_key,  # TODO: Encrypt
-        secret_enc=api_key_data.api_secret,  # TODO: Encrypt
-        meta=api_key_data.meta
+        key_enc=key_enc,
+        secret_enc=secret_enc,
+        meta={
+            'wallet_address': request.wallet_address if venue == 'hyperliquid' else None,
+            'auto_sync': request.auto_sync,
+            'sync_interval_minutes': request.sync_interval_minutes,
+            'connection_test': connection_test
+        }
     )
     
-    db.add(api_key)
+    db.add(new_api_key)
     db.commit()
-    db.refresh(api_key)
+    db.refresh(new_api_key)
     
-    logger.info("Broker connected", user_id=str(current_user.id), venue=venue)
+    logger.info("Broker connected", user_id=current_user.id, venue=venue)
     
-    return ApiKeyResponse(
-        id=str(api_key.id),
-        venue=api_key.venue,
-        created_at=api_key.created_at
+    return BrokerConnectionResponse(
+        id=api_key_id,
+        venue=venue,
+        status='connected',
+        wallet_address=request.wallet_address if venue == 'hyperliquid' else None,
+        api_key_masked=api_key_masked,
+        account_value=connection_test.get('account_value'),
+        positions_count=connection_test.get('positions_count'),
+        message=f"Successfully connected to {venue.title()}"
     )
 
 @router.get("/fills")
@@ -199,31 +327,157 @@ async def get_positions(
     
     return positions
 
-@router.post("/sync")
+@router.post("/sync", response_model=List[SyncTradesResponse])
 async def sync_trades(
-    venue: Optional[str] = None,
+    request: SyncTradesRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Manually sync trades from connected brokers"""
+    """
+    Manually sync trades from connected brokers
+    
+    Supports filtering by:
+    - venue: Specific exchange to sync from
+    - symbols: List of symbols to import
+    - start_date/end_date: Date range for historical import
+    - limit: Maximum number of trades to import
+    """
     
     # Get user's API keys
-    api_keys = db.query(ApiKey).filter(ApiKey.user_id == current_user.id)
+    api_keys_query = db.query(ApiKey).filter(ApiKey.user_id == current_user.id)
     
-    if venue:
-        api_keys = api_keys.filter(ApiKey.venue == venue)
+    if request.venue:
+        api_keys_query = api_keys_query.filter(ApiKey.venue == request.venue.lower())
     
-    synced_count = 0
+    api_keys = api_keys_query.all()
     
-    for api_key in api_keys.all():
+    if not api_keys:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No connected brokers found"
+        )
+    
+    sync_results = []
+    
+    for api_key in api_keys:
         try:
-            broker_service = BrokerService(api_key.venue)
-            # TODO: Implement trade syncing
-            synced_count += 0  # Placeholder
+            # Decrypt credentials
+            decrypted_key = encryption_service.decrypt(api_key.key_enc)
+            decrypted_secret = encryption_service.decrypt(api_key.secret_enc)
+            
+            # Initialize broker service based on auth method
+            if api_key.venue == 'hyperliquid':
+                wallet_address = api_key.meta.get('wallet_address') or decrypted_key
+                broker_service = BrokerService(
+                    venue=api_key.venue,
+                    api_key=decrypted_secret if decrypted_secret else None,
+                    wallet_address=wallet_address
+                )
+            elif api_key.venue == 'coinbase':
+                # Coinbase uses OAuth - decrypted_key is access_token
+                broker_service = BrokerService(
+                    venue=api_key.venue,
+                    oauth_token=decrypted_key
+                )
+            else:
+                # Kraken and others use API keys
+                broker_service = BrokerService(
+                    venue=api_key.venue,
+                    api_key=decrypted_key,
+                    api_secret=decrypted_secret
+                )
+            
+            # Fetch trades from broker
+            broker_trades = broker_service.get_trades(
+                since=request.start_date,
+                until=request.end_date,
+                limit=request.limit,
+                symbols=request.symbols
+            )
+            
+            logger.info(f"Fetched {len(broker_trades)} trades from {api_key.venue}")
+            
+            # Match positions and calculate PnL if not already provided
+            if broker_trades:
+                broker_trades = match_and_calculate_pnl(broker_trades)
+            
+            # Import trades into database
+            trades_added = 0
+            trades_updated = 0
+            trades_skipped = 0
+            trades_errors = 0
+            
+            for broker_trade in broker_trades:
+                try:
+                    # Check if trade already exists (by order_ref and venue)
+                    existing_trade = None
+                    if broker_trade.get('order_ref'):
+                        existing_trade = db.query(Trade).filter(
+                            Trade.user_id == current_user.id,
+                            Trade.order_ref == broker_trade['order_ref'],
+                            Trade.venue == broker_trade['venue']
+                        ).first()
+                    
+                    if existing_trade:
+                        trades_skipped += 1
+                        continue
+                    
+                    # Create new trade
+                    new_trade = Trade(
+                        id=str(uuid.uuid4()),
+                        user_id=current_user.id,
+                        account=api_key.venue,
+                        venue=broker_trade['venue'],
+                        symbol=broker_trade['symbol'],
+                        side=broker_trade['side'],
+                        qty=broker_trade['qty'],
+                        avg_price=broker_trade['avg_price'],
+                        fees=broker_trade.get('fees', 0),
+                        pnl=broker_trade.get('pnl', 0),
+                        filled_at=broker_trade['filled_at'],
+                        submitted_at=broker_trade.get('submitted_at', broker_trade['filled_at']),
+                        order_ref=broker_trade.get('order_ref'),
+                        raw=broker_trade.get('raw')
+                    )
+                    
+                    db.add(new_trade)
+                    trades_added += 1
+                    
+                except Exception as e:
+                    logger.error("Failed to import trade", error=str(e))
+                    trades_errors += 1
+            
+            db.commit()
+            
+            # Update last sync time in metadata
+            if not api_key.meta:
+                api_key.meta = {}
+            api_key.meta['last_sync'] = datetime.utcnow().isoformat()
+            db.commit()
+            
+            sync_results.append(SyncTradesResponse(
+                venue=api_key.venue,
+                synced_count=len(broker_trades),
+                skipped_count=trades_skipped,
+                error_count=trades_errors,
+                trades_added=trades_added,
+                trades_updated=trades_updated,
+                message=f"Synced {trades_added} new trades from {api_key.venue}"
+            ))
+            
         except Exception as e:
-            logger.error("Failed to sync trades", venue=api_key.venue, error=str(e))
+            logger.error("Failed to sync trades from venue", venue=api_key.venue, error=str(e), exc_info=True)
+            sync_results.append(SyncTradesResponse(
+                venue=api_key.venue,
+                synced_count=0,
+                skipped_count=0,
+                error_count=0,
+                trades_added=0,
+                trades_updated=0,
+                message=f"Error: {str(e)}"
+            ))
     
-    return {"message": f"Synced {synced_count} trades", "venues": [ak.venue for ak in api_keys.all()]}
+    return sync_results
 
 @router.get("/status")
 async def get_broker_status(
@@ -259,35 +513,30 @@ async def get_broker_status(
     
     return {"brokers": status_list}
 
-@router.delete("/revoke/{venue}")
-async def revoke_broker(
-    venue: str,
+@router.delete("/connections/{connection_id}")
+async def disconnect_broker(
+    connection_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Revoke broker connection and delete API keys"""
+    """Disconnect and delete a broker connection"""
     
-    if venue not in ["kraken", "coinbase"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported venue. Supported: kraken, coinbase"
-        )
-    
-    # Find and delete API key
+    # Find API key
     api_key = db.query(ApiKey).filter(
-        ApiKey.user_id == current_user.id,
-        ApiKey.venue == venue
+        ApiKey.id == connection_id,
+        ApiKey.user_id == current_user.id
     ).first()
     
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No connection found for {venue}"
+            detail="Connection not found"
         )
     
+    venue = api_key.venue
     db.delete(api_key)
     db.commit()
     
-    logger.info("Broker connection revoked", user_id=str(current_user.id), venue=venue)
+    logger.info("Broker connection deleted", user_id=str(current_user.id), venue=venue, connection_id=connection_id)
     
-    return {"message": f"Successfully revoked {venue} connection"}
+    return {"message": f"Successfully disconnected from {venue}"}

@@ -60,7 +60,7 @@ export default function AppShell({ children }: AppShellProps) {
 
   const fetchUserData = async () => {
     try {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
       if (!token) {
         router.push('/auth')
         return
@@ -168,7 +168,7 @@ export default function AppShell({ children }: AppShellProps) {
                   {user?.email}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {user?.plan?.toUpperCase()} Plan
+                  {user?.plan === 'plus_monthly' || user?.plan === 'plus_yearly' ? 'PLUS' : user?.plan?.toUpperCase() || 'FREE'} Plan
                 </p>
               </div>
             </div>

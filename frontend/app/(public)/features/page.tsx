@@ -16,6 +16,8 @@ import {
   CogIcon,
   BellIcon,
 } from "@heroicons/react/24/outline";
+import PublicHeader from "@/components/layout/PublicHeader";
+import PublicFooter from "@/components/layout/PublicFooter";
 
 export default function FeaturesPage() {
   const mainFeatures = [
@@ -30,7 +32,8 @@ export default function FeaturesPage() {
         "Risk-adjusted returns",
         "Trade heatmaps by symbol and time",
         "Consistency scoring"
-      ]
+      ],
+      image: null
     },
     {
       icon: CpuChipIcon,
@@ -43,7 +46,8 @@ export default function FeaturesPage() {
         "Risk management suggestions",
         "Entry and exit timing analysis",
         "Performance improvement recommendations"
-      ]
+      ],
+      image: null
     },
     {
       icon: DocumentTextIcon,
@@ -56,39 +60,26 @@ export default function FeaturesPage() {
         "Custom tags and categorization",
         "Trade session grouping",
         "Export capabilities (PDF, CSV, JSON)"
-      ]
+      ],
+      image: null
     },
     {
-      icon: ShieldCheckIcon,
-      title: "Discipline & Risk Management",
-      description: "Built-in tools to help you stick to your trading plan and manage risk.",
+      icon: ArrowTrendingUpIcon,
+      title: "Advanced Backtesting Studio",
+      description: "Test and validate your trading strategies with historical data before risking real capital.",
       features: [
-        "Daily stop-loss limits",
-        "Maximum trades per day",
-        "Cooldown periods",
-        "Quiet hours enforcement",
-        "Real-time alerts and notifications",
-        "Streak tracking and achievements"
-      ]
+        "Visual strategy builder",
+        "Historical data backtesting",
+        "Performance metrics and reports",
+        "Multiple timeframe analysis",
+        "Strategy optimization tools",
+        "Paper trading integration"
+      ],
+      image: "/images/features/backtest.png"
     }
   ];
 
   const additionalFeatures = [
-    {
-      icon: ArrowTrendingUpIcon,
-      title: "Backtesting Studio",
-      description: "Test your strategies with historical data and advanced backtesting tools."
-    },
-    {
-      icon: EyeIcon,
-      title: "Market Explorer",
-      description: "Analyze market data with interactive charts and technical indicators."
-    },
-    {
-      icon: BellIcon,
-      title: "Smart Alerts",
-      description: "Get notified about important market events and trading opportunities."
-    },
     {
       icon: ClockIcon,
       title: "Session Tracking",
@@ -103,43 +94,7 @@ export default function FeaturesPage() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Navigation */}
-      <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Link href="/">
-                  <img
-                    src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
-                    alt="TradeQuest"
-                    className="h-10 w-auto"
-                  />
-                </Link>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/features" className="text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium">
-                  Features
-                </Link>
-                <Link href="/pricing" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Pricing
-                </Link>
-                <Link href="/docs" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Docs
-                </Link>
-                <Link href="/contact" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Contact
-                </Link>
-                <Link href="/auth" className="bg-brand-bright-yellow text-gray-900 hover:bg-brand-bright-yellow/90 px-6 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl">
-                  Get Started
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <PublicHeader currentPage="features" />
 
       {/* Hero Section */}
       <section className="py-24 bg-gradient-to-br from-gray-900 via-brand-dark-teal/20 to-gray-900">
@@ -195,11 +150,24 @@ export default function FeaturesPage() {
                   </ul>
                 </div>
                 <div className="flex-1">
-                  <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-12 h-96 flex items-center justify-center hover:border-brand-teal transition-all duration-300">
-                    <div className="text-center">
-                      <feature.icon className="h-32 w-32 mx-auto mb-6 text-brand-teal" />
-                      <p className="text-gray-500 text-lg">Feature Preview</p>
+                  <div className="relative bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm border-2 border-gray-700 rounded-2xl p-12 h-96 flex items-center justify-center hover:border-brand-teal hover:shadow-2xl hover:shadow-brand-teal/20 transition-all duration-300 group overflow-hidden">
+                    {/* Animated background pattern */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute inset-0" style={{
+                        backgroundImage: 'radial-gradient(circle at 2px 2px, rgb(20 184 166) 1px, transparent 0)',
+                        backgroundSize: '40px 40px'
+                      }}></div>
                     </div>
+                    
+                    {/* Large icon with glow */}
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-brand-teal/30 blur-3xl group-hover:bg-brand-teal/50 transition-all duration-300"></div>
+                      <feature.icon className="relative h-48 w-48 text-brand-teal group-hover:text-brand-bright-yellow transition-colors duration-300" />
+                    </div>
+                    
+                    {/* Corner accent */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-bright-yellow/20 to-transparent rounded-bl-full"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-brand-teal/20 to-transparent rounded-tr-full"></div>
                   </div>
                 </div>
               </motion.div>
@@ -219,7 +187,7 @@ export default function FeaturesPage() {
               Additional tools and features to enhance your trading experience.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {additionalFeatures.map((feature, index) => (
               <motion.div
                 key={feature.title}
@@ -266,48 +234,7 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-black border-t border-gray-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
-            <div>
-              <img
-                src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
-                alt="TradeQuest"
-                className="h-10 w-auto mb-4"
-              />
-              <p className="text-gray-400 leading-relaxed">
-                The trading platform that focuses on education, discipline, and continuous improvement.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Product</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li><Link href="/features" className="hover:text-brand-bright-yellow transition-colors">Features</Link></li>
-                <li><Link href="/pricing" className="hover:text-brand-bright-yellow transition-colors">Pricing</Link></li>
-                <li><Link href="/docs" className="hover:text-brand-bright-yellow transition-colors">Documentation</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Company</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li><Link href="/contact" className="hover:text-brand-bright-yellow transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Legal</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li><Link href="/terms" className="hover:text-brand-bright-yellow transition-colors">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="hover:text-brand-bright-yellow transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/risk-disclaimer" className="hover:text-brand-bright-yellow transition-colors">Risk Disclaimer</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 pt-8 text-center">
-            <p className="text-gray-500">&copy; 2025 TradeQuest. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

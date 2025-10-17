@@ -8,20 +8,6 @@ from sqlalchemy.sql import func
 import uuid
 from app.core.database import Base
 
-class ApiKey(Base):
-    __tablename__ = "api_keys"
-    
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    venue = Column(String, nullable=False)  # kraken, coinbase
-    key_enc = Column(Text, nullable=False)  # Encrypted API key
-    secret_enc = Column(Text, nullable=False)  # Encrypted API secret
-    meta = Column(Text)  # Additional metadata (JSON as text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    # Relationships
-    user = relationship("User", back_populates="api_keys")
-
 class Trade(Base):
     __tablename__ = "trades"
     

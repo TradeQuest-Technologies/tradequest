@@ -19,8 +19,9 @@ from app.schemas.backtest_v2 import (
     StrategyGraphCreate, StrategyGraphUpdate, StrategyGraphResponse,
     BacktestRunCreate, BacktestRunResponse, BacktestRunListItem,
     CopilotRequest, CopilotResponse, TemplateResponse,
-    RunConfig
+    RunConfig, BacktestAnalyzeRequest, BacktestAnalyzeResponse
 )
+from app.schemas.backtest_copilot import AnalyzeStreamingRequest
 from app.services.run_manager import get_run_manager
 from app.services.backtest_copilot import BacktestCopilot
 
@@ -244,12 +245,25 @@ async def create_backtest_run(
         )
 
 
+def sanitize_float(value):
+    """Convert NaN/Infinity to None for JSON compliance"""
+    if value is None:
+        return None
+    try:
+        import math
+        if math.isnan(value) or math.isinf(value):
+            return None
+        return value
+    except (TypeError, ValueError):
+        return None
+
 @router.get("/runs", response_model=List[BacktestRunListItem])
 async def get_backtest_runs(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     limit: int = Query(50, ge=1, le=200),
-    status: Optional[str] = None
+    status: Optional[str] = None,
+    strategy_graph_id: Optional[str] = None
 ):
     """Get user's backtest runs"""
     
@@ -260,6 +274,9 @@ async def get_backtest_runs(
     if status:
         query = query.filter(BacktestRun.status == status)
     
+    if strategy_graph_id:
+        query = query.filter(BacktestRun.strategy_graph_id == strategy_graph_id)
+    
     runs = query.order_by(BacktestRun.created_at.desc()).limit(limit).all()
     
     # Build list items with strategy names
@@ -267,16 +284,22 @@ async def get_backtest_runs(
     for run in runs:
         graph = db.query(StrategyGraph).filter(StrategyGraph.id == run.strategy_graph_id).first()
         
+        # Sanitize float values to avoid JSON serialization errors
+        sharpe = sanitize_float(run.metrics.get("sharpe_ratio")) if run.metrics else None
+        cagr = sanitize_float(run.metrics.get("cagr")) if run.metrics else None
+        max_dd = sanitize_float(run.metrics.get("max_drawdown")) if run.metrics else None
+        total_trades = run.metrics.get("total_trades") if run.metrics else None
+        
         item = BacktestRunListItem(
             id=run.id,
             strategy_graph_id=run.strategy_graph_id,
             strategy_name=graph.name if graph else "Unknown",
             status=run.status,
             progress=run.progress,
-            sharpe=run.metrics.get("sharpe_ratio") if run.metrics else None,
-            cagr=run.metrics.get("cagr") if run.metrics else None,
-            max_dd=run.metrics.get("max_drawdown") if run.metrics else None,
-            total_trades=run.metrics.get("total_trades") if run.metrics else None,
+            sharpe=sharpe,
+            cagr=cagr,
+            max_dd=max_dd,
+            total_trades=total_trades,
             created_at=run.created_at,
             duration_seconds=run.duration_seconds
         )
@@ -416,13 +439,59 @@ async def cancel_backtest_run(
 # AI COPILOT
 # ============================================================================
 
+@router.post("/copilot-stream")
+async def copilot_request_stream(
+    request: CopilotRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Process AI copilot request with streaming to avoid timeouts"""
+    
+    from fastapi.responses import StreamingResponse
+    import json
+    import asyncio
+    
+    async def generate():
+        try:
+            # Send initial status
+            yield f"data: {json.dumps({'type': 'status', 'message': 'Analyzing your request...'})}\n\n"
+            await asyncio.sleep(0.1)
+            
+            copilot = BacktestCopilot(db, current_user.id)
+            
+            yield f"data: {json.dumps({'type': 'status', 'message': 'Building strategy with AI...'})}\n\n"
+            await asyncio.sleep(0.1)
+            
+            # Process the request
+            response = await copilot.process_request(request)
+            
+            logger.info(f"Copilot request processed", user_id=current_user.id)
+            
+            # Send final result
+            yield f"data: {json.dumps({'type': 'result', 'data': response.dict()})}\n\n"
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"Copilot stream failed: {e}", user_id=current_user.id)
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
 @router.post("/copilot", response_model=CopilotResponse)
 async def copilot_request(
     request: CopilotRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Process AI copilot request"""
+    """Process AI copilot request (non-streaming, may timeout for complex requests)"""
     
     try:
         copilot = BacktestCopilot(db, current_user.id)
@@ -437,6 +506,353 @@ async def copilot_request(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Copilot request failed: {str(e)}"
+        )
+
+
+@router.get("/conversations/{strategy_id}")
+async def get_strategy_conversations(
+    strategy_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get conversation history for a specific strategy"""
+    from app.models.backtest_conversation import BacktestConversation
+    
+    try:
+        messages = db.query(BacktestConversation).filter(
+            BacktestConversation.user_id == current_user.id,
+            BacktestConversation.strategy_id == strategy_id
+        ).order_by(BacktestConversation.message_index).all()
+        
+        return {
+            "messages": [
+                {
+                    "id": msg.id,
+                    "role": msg.role,
+                    "content": msg.content,
+                    "metadata": json.loads(msg.message_data) if msg.message_data else None,
+                    "created_at": msg.created_at.isoformat()
+                }
+                for msg in messages
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Failed to load conversations: {e}")
+        return {"messages": []}
+
+
+@router.post("/analyze", response_model=BacktestAnalyzeResponse)
+async def analyze_backtest_run(
+    request: BacktestAnalyzeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    AI-powered backtest analysis endpoint.
+    Analyzes a backtest run and answers user questions about the results.
+    """
+    try:
+        logger.info(f"[ANALYZE] Starting analysis request", user_id=current_user.id)
+        run_id = request.run_id
+        user_question = request.user_question
+        backtest_context = request.backtest_context
+        chat_history = request.chat_history
+        
+        logger.info(f"[ANALYZE] Request parsed - run_id: {run_id}, question length: {len(user_question)}", user_id=current_user.id)
+        
+        if not run_id or not user_question:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing run_id or user_question"
+            )
+        
+        # Verify run belongs to user
+        logger.info(f"[ANALYZE] Checking if run exists", user_id=current_user.id, run_id=run_id)
+        run = db.query(BacktestRun).filter(
+            BacktestRun.id == run_id,
+            BacktestRun.user_id == current_user.id
+        ).first()
+        
+        if not run:
+            logger.warning(f"[ANALYZE] Run not found", user_id=current_user.id, run_id=run_id)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Backtest run not found"
+            )
+        
+        logger.info(f"[ANALYZE] Run found, initializing OpenAI", user_id=current_user.id)
+        
+        # Import OpenAI
+        from openai import OpenAI
+        import os
+        
+        openai_key = os.getenv("OPENAI_API_KEY")
+        logger.info(f"[ANALYZE] OpenAI key present: {bool(openai_key)}", user_id=current_user.id)
+        if not openai_key:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="AI service not configured"
+            )
+        
+        client = OpenAI(api_key=openai_key)
+        
+        # Build analysis prompt
+        metrics = backtest_context.get("metrics", {})
+        config = backtest_context.get("config", {})
+        
+        system_prompt = f"""You are an expert quantitative trading analyst specializing in backtest analysis. 
+
+You have access to a backtest run with the following details:
+
+**Strategy Configuration:**
+- Symbol: {config.get('symbol', 'N/A')}
+- Timeframe: {config.get('timeframe', 'N/A')}
+- Initial Capital: ${config.get('initial_capital', 10000):,.2f}
+- Start Date: {config.get('start_date', 'N/A')}
+- End Date: {config.get('end_date', 'N/A')}
+
+**Performance Metrics:**
+- Total Return: {metrics.get('total_return', 0) * 100:.2f}%
+- CAGR: {metrics.get('cagr', 0) * 100:.2f}%
+- Sharpe Ratio: {metrics.get('sharpe_ratio', 0):.2f}
+- Sortino Ratio: {metrics.get('sortino_ratio', 0):.2f}
+- Max Drawdown: {metrics.get('max_drawdown', 0) * 100:.2f}%
+- Win Rate: {metrics.get('win_rate', 0) * 100:.2f}%
+- Profit Factor: {metrics.get('profit_factor', 0):.2f}
+
+**Trade Statistics:**
+- Total Trades: {backtest_context.get('total_trades', 0)}
+- Winning Trades: {backtest_context.get('winning_trades', 0)}
+- Losing Trades: {backtest_context.get('losing_trades', 0)}
+- Average Holding Time: {backtest_context.get('avg_holding_time', 0):.2f} hours
+- Largest Win: ${backtest_context.get('largest_win', 0):,.2f}
+- Largest Loss: ${backtest_context.get('largest_loss', 0):,.2f}
+- Average Win: ${metrics.get('avg_win', 0):,.2f}
+- Average Loss: ${metrics.get('avg_loss', 0):,.2f}
+
+**Warnings:**
+{chr(10).join('- ' + w.get('message', str(w)) for w in backtest_context.get('warnings', []))}
+
+Your task is to provide insightful, actionable analysis based on these metrics. Answer the user's specific questions with:
+1. Clear, data-driven insights
+2. Specific recommendations for improvement
+3. Risk assessment and warnings
+4. Comparisons to industry benchmarks where relevant
+
+Be concise but thorough. Use markdown formatting for better readability."""
+        
+        # Build conversation messages
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        for msg in chat_history[-5:]:  # Last 5 messages for context
+            messages.append({
+                "role": msg.get("role"),
+                "content": msg.get("content")
+            })
+        
+        messages.append({
+            "role": "user",
+            "content": user_question
+        })
+        
+        # Call OpenAI
+        logger.info(f"[ANALYZE] Calling OpenAI API with {len(messages)} messages", user_id=current_user.id)
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            max_tokens=2048,
+            temperature=0.7
+        )
+        
+        logger.info(f"[ANALYZE] OpenAI API call successful", user_id=current_user.id)
+        ai_response = response.choices[0].message.content
+        
+        logger.info(f"[ANALYZE] Analysis completed, response length: {len(ai_response)}", user_id=current_user.id, run_id=run_id)
+        
+        return {
+            "response": ai_response,
+            "model": "gpt-4o",
+            "success": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Failed to analyze backtest: {e}\n{error_details}", user_id=current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Analysis failed: {str(e)}"
+        )
+
+
+@router.get("/runs/{run_id}/risk-analysis")
+async def get_risk_analysis(
+    run_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Comprehensive risk analysis for a backtest run
+    """
+    try:
+        # Verify run belongs to user
+        run = db.query(BacktestRun).filter(
+            BacktestRun.id == run_id,
+            BacktestRun.user_id == current_user.id
+        ).first()
+        
+        if not run:
+            raise HTTPException(status_code=404, detail="Backtest run not found")
+        
+        if run.status != 'completed':
+            raise HTTPException(status_code=400, detail="Backtest must be completed")
+        
+        # Import analyzer
+        from app.services.quant_analytics import RiskAnalyzer
+        
+        # Initialize analyzer
+        analyzer = RiskAnalyzer(
+            trades=run.trades or [],
+            equity_curve=run.equity_curve or [],
+            config=run.config
+        )
+        
+        # Calculate all risk metrics
+        results = analyzer.calculate_all_metrics()
+        
+        logger.info(f"Risk analysis completed", user_id=current_user.id, run_id=run_id)
+        
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Risk analysis failed: {e}", user_id=current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Risk analysis failed: {str(e)}"
+        )
+
+
+@router.get("/runs/{run_id}/validate")
+async def get_statistical_validation(
+    run_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Statistical validation including Monte Carlo, bootstrap, and overfitting detection
+    """
+    try:
+        # Verify run belongs to user
+        run = db.query(BacktestRun).filter(
+            BacktestRun.id == run_id,
+            BacktestRun.user_id == current_user.id
+        ).first()
+        
+        if not run:
+            raise HTTPException(status_code=404, detail="Backtest run not found")
+        
+        if run.status != 'completed':
+            raise HTTPException(status_code=400, detail="Backtest must be completed")
+        
+        # Import validator
+        from app.services.quant_analytics import StatisticalValidator
+        
+        # Initialize validator
+        validator = StatisticalValidator(
+            trades=run.trades or [],
+            equity_curve=run.equity_curve or [],
+            config=run.config
+        )
+        
+        # Run all validations
+        results = validator.calculate_all_validations()
+        
+        logger.info(f"Statistical validation completed", user_id=current_user.id, run_id=run_id)
+        
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Statistical validation failed: {e}", user_id=current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Validation failed: {str(e)}"
+        )
+
+
+@router.post("/runs/{run_id}/optimize")
+async def optimize_strategy(
+    run_id: str,
+    request: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Optimize strategy parameters using parameter sweep
+    
+    Request body should contain:
+    {
+        "parameter_ranges": {
+            "stop_loss_pct": {"min": 1, "max": 5, "step": 0.5},
+            "take_profit_pct": {"min": 2, "max": 10, "step": 1},
+            ...
+        }
+    }
+    """
+    try:
+        # Verify run belongs to user
+        run = db.query(BacktestRun).filter(
+            BacktestRun.id == run_id,
+            BacktestRun.user_id == current_user.id
+        ).first()
+        
+        if not run:
+            raise HTTPException(status_code=404, detail="Backtest run not found")
+        
+        if run.status != 'completed':
+            raise HTTPException(status_code=400, detail="Backtest must be completed")
+        
+        parameter_ranges = request.get('parameter_ranges', {})
+        
+        if not parameter_ranges:
+            raise HTTPException(status_code=400, detail="No parameter ranges provided")
+        
+        # Import optimizer
+        from app.services.quant_analytics import StrategyOptimizer
+        
+        # Initialize optimizer
+        optimizer = StrategyOptimizer(
+            trades=run.trades or [],
+            config=run.config
+        )
+        
+        # Run optimization
+        results = optimizer.optimize_parameters(parameter_ranges)
+        
+        # Also include position sizing analysis
+        kelly = optimizer.calculate_kelly_criterion()
+        position_sizing = optimizer.compare_position_sizing_methods()
+        
+        results['kelly_criterion'] = kelly
+        results['position_sizing_comparison'] = position_sizing
+        
+        logger.info(f"Optimization completed", user_id=current_user.id, run_id=run_id,
+                   combinations=results.get('total_combinations_tested', 0))
+        
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Optimization failed: {e}", user_id=current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Optimization failed: {str(e)}"
         )
 
 
@@ -484,4 +900,140 @@ async def get_template(
     db.commit()
     
     return TemplateResponse.from_orm(template)
+
+
+# ============================================================================
+# ADVANCED AI COPILOT (AGENTIC SYSTEM)
+# ============================================================================
+
+@router.post("/analyze-streaming")
+async def analyze_backtest_streaming(
+    request: AnalyzeStreamingRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Advanced agentic AI analysis with streaming responses.
+    
+    Returns Server-Sent Events (SSE) stream with:
+    - tool_call: When AI calls a tool
+    - tool_result: Tool execution result
+    - thinking: AI reasoning
+    - message: AI response text
+    - chart: Generated chart
+    - parameter_update: Suggested parameter changes
+    - backtest_triggered: New backtest run started
+    - error: Error occurred
+    - done: Stream complete
+    """
+    from app.services.backtest_copilot_advanced import BacktestCopilotAdvanced
+    
+    async def event_generator():
+        """Generate SSE events"""
+        # Create a new DB session that lives for the entire streaming duration
+        from app.core.database import SessionLocal
+        streaming_db = SessionLocal()
+        
+        try:
+            copilot = BacktestCopilotAdvanced(streaming_db, current_user)
+            
+            logger.info("[SSE] Starting to iterate over analyze_streaming")
+            event_count = 0
+            async for event in copilot.analyze_streaming(
+                run_id=request.run_id,
+                user_question=request.user_question,
+                chat_history=request.chat_history,
+                context=request.context
+            ):
+                event_count += 1
+                event_type = event.get('type', 'unknown') if isinstance(event, dict) else 'unknown'
+                logger.info(f"[SSE] Received event #{event_count}, type: {event_type}")
+                
+                # Convert datetime to string for JSON serialization
+                if isinstance(event, dict) and 'timestamp' in event:
+                    from datetime import datetime
+                    if isinstance(event['timestamp'], datetime):
+                        event['timestamp'] = event['timestamp'].isoformat()
+                
+                # Use custom encoder to handle numpy types and pandas objects
+                import numpy as np
+                import pandas as pd
+                
+                class NumpyEncoder(json.JSONEncoder):
+                    def default(self, obj):
+                        if isinstance(obj, (np.integer, np.int32, np.int64)):
+                            return int(obj)
+                        elif isinstance(obj, (np.floating, np.float32, np.float64)):
+                            return float(obj)
+                        elif isinstance(obj, (np.bool_,)):
+                            return bool(obj)
+                        elif isinstance(obj, np.ndarray):
+                            return obj.tolist()
+                        elif isinstance(obj, (pd.DataFrame, pd.Series)):
+                            return obj.to_dict()
+                        return super().default(obj)
+                
+                # Format as SSE with explicit byte encoding
+                sse_data = "data: {}\n\n".format(json.dumps(event, cls=NumpyEncoder))
+                logger.info(f"[SSE] Yielding event #{event_count}, first 100 chars: {repr(sse_data[:100])}")
+                # Yield as bytes to preserve newlines
+                yield sse_data.encode()
+                logger.info(f"[SSE] Successfully yielded event #{event_count}")
+            
+            logger.info(f"[SSE] Finished iterating, total events: {event_count}")
+        
+        except Exception as e:
+            logger.error(f"Streaming analysis error: {e}", exc_info=True)
+            from datetime import datetime
+            error_event = {
+                "type": "error",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            yield "data: {}\n\n".format(json.dumps(error_event)).encode()
+            
+            done_event = {"type": "done", "timestamp": datetime.utcnow().isoformat()}
+            yield "data: {}\n\n".format(json.dumps(done_event)).encode()
+        
+        finally:
+            # Close the streaming database session
+            streaming_db.close()
+            logger.info("[SSE] Streaming database session closed")
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+
+@router.get("/charts/{chart_id}")
+async def get_chart(
+    chart_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Serve a generated chart by ID.
+    
+    Charts are generated by the AI copilot visualization tools.
+    """
+    from pathlib import Path
+    
+    chart_path = Path("charts") / f"{chart_id}.png"
+    
+    if not chart_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chart not found"
+        )
+    
+    return FileResponse(
+        chart_path,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=3600"}
+    )
 

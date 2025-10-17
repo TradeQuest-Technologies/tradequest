@@ -21,7 +21,7 @@ export default function AuthCallback() {
     }
 
     // Prevent double processing
-    if (hasProcessed) {
+    if (hasProcessed || status !== 'loading') {
       return;
     }
     setHasProcessed(true);

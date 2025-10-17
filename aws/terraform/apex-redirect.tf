@@ -51,17 +51,5 @@ resource "aws_s3_bucket_policy" "apex_redirect" {
   depends_on = [aws_s3_bucket_public_access_block.apex_redirect]
 }
 
-# Route 53 A record for apex domain pointing to S3 website endpoint
-resource "aws_route53_record" "apex_redirect" {
-  count   = var.domain_name != "" ? 1 : 0
-  zone_id = var.route53_zone_id
-  name    = var.domain_name
-  type    = "A"
-
-  alias {
-    name                   = aws_s3_bucket_website_configuration.apex_redirect[0].website_domain
-    zone_id                = aws_s3_bucket.apex_redirect[0].hosted_zone_id
-    evaluate_target_health = false
-  }
-}
+# Route 53 A record is now managed in cloudfront-redirect.tf
 

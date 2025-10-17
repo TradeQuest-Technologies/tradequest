@@ -2,7 +2,7 @@
 Pydantic schemas for Backtesting v2
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, field_validator
 from typing import List, Dict, Any, Optional, Literal
 from datetime import datetime
 from enum import Enum
@@ -220,35 +220,49 @@ class BacktestRunCreate(BaseModel):
 class BacktestMetrics(BaseModel):
     """Comprehensive backtest metrics"""
     # Returns
-    cagr: float
-    total_return: float
+    cagr: Optional[float] = None
+    total_return: Optional[float] = None
     
     # Risk-adjusted
-    sharpe_ratio: float
-    sortino_ratio: float
-    calmar_ratio: float
+    sharpe_ratio: Optional[float] = None
+    sortino_ratio: Optional[float] = None
+    calmar_ratio: Optional[float] = None
     
     # Risk
-    stdev: float
-    max_drawdown: float
-    max_drawdown_duration_days: Optional[int]
-    ulcer_index: Optional[float]
+    stdev: Optional[float] = None
+    max_drawdown: Optional[float] = None
+    max_drawdown_duration_days: Optional[int] = None
+    ulcer_index: Optional[float] = None
     
     # Trade stats
-    total_trades: int
-    win_rate: float
-    profit_factor: float
-    avg_win: float
-    avg_loss: float
-    expectancy: float
+    total_trades: Optional[int] = None
+    win_rate: Optional[float] = None
+    profit_factor: Optional[float] = None
+    avg_win: Optional[float] = None
+    avg_loss: Optional[float] = None
+    expectancy: Optional[float] = None
     
     # Exposure
-    exposure_pct: float
-    turnover: float
+    exposure_pct: Optional[float] = None
+    turnover: Optional[float] = None
     
     # Costs
-    total_fees: float
-    total_slippage: float
+    total_fees: Optional[float] = None
+    
+    @field_validator('*', mode='before')
+    @classmethod
+    def sanitize_floats(cls, v):
+        """Convert NaN/Infinity to None for JSON compliance"""
+        if v is None:
+            return None
+        try:
+            import math
+            float_val = float(v)
+            if math.isnan(float_val) or math.isinf(float_val):
+                return None
+            return float_val
+        except (ValueError, TypeError):
+            return v
 
 
 class EquityPoint(BaseModel):
@@ -263,7 +277,7 @@ class Trade(BaseModel):
     """Individual trade"""
     entry_time: str
     exit_time: str
-    symbol: str
+    symbol: Optional[str] = None  # Made optional to handle legacy data with null symbols
     side: Literal["long", "short"]
     entry_price: float
     exit_price: float
@@ -483,4 +497,23 @@ class TemplateResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# AI ANALYSIS
+# ============================================================================
+
+class BacktestAnalyzeRequest(BaseModel):
+    """Request schema for AI backtest analysis"""
+    run_id: str
+    user_question: str
+    backtest_context: Dict[str, Any] = Field(default_factory=dict)
+    chat_history: List[Dict[str, str]] = Field(default_factory=list)
+
+
+class BacktestAnalyzeResponse(BaseModel):
+    """Response schema for AI backtest analysis"""
+    response: str
+    model: str
+    success: bool = True
 

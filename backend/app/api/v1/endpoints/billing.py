@@ -2,10 +2,11 @@
 Billing endpoints for Stripe integration
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Body
 from sqlalchemy.orm import Session
 from typing import Dict, Any
 import structlog
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -15,6 +16,13 @@ from app.core.plan_limits import get_user_plan, get_plan_limits, check_trade_lim
 
 logger = structlog.get_logger()
 router = APIRouter()
+
+
+class CheckoutRequest(BaseModel):
+    plan: str
+    success_url: str
+    cancel_url: str
+
 
 @router.get("/plans")
 async def get_plans():
@@ -59,42 +67,101 @@ async def get_subscription(
 
 @router.post("/checkout")
 async def create_checkout_session(
-    plan: str,
-    success_url: str = "http://localhost:3000/dashboard?success=true",
-    cancel_url: str = "http://localhost:3000/pricing?canceled=true",
+    request: CheckoutRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Create Stripe checkout session"""
     
-    if plan not in ["plus"]:
+    logger.info("Checkout endpoint called", user_id=current_user.id, plan=request.plan)
+    
+    if request.plan not in ["plus_monthly", "plus_yearly"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid plan. Only 'plus' plan is available."
+            detail="Invalid plan. Only 'plus_monthly' and 'plus_yearly' plans are available."
         )
     
+    logger.info("Creating StripeService instance")
     stripe_service = StripeService()
     
+    logger.info("About to call create_checkout_session")
     try:
         session_data = stripe_service.create_checkout_session(
             user_id=str(current_user.id),
             user_email=current_user.email,
-            plan=plan,
-            success_url=success_url,
-            cancel_url=cancel_url
+            plan=request.plan,
+            success_url=request.success_url,
+            cancel_url=request.cancel_url
         )
+        
+        logger.info("Checkout session created successfully", session_id=session_data.get("session_id"))
         
         return {
             "checkout_url": session_data["url"],
             "session_id": session_data["session_id"],
-            "plan": plan
+            "plan": request.plan
         }
         
     except Exception as e:
-        logger.error("Checkout creation failed", error=str(e))
+        logger.error("Checkout creation failed", error=str(e), error_type=type(e).__name__)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create checkout session: {str(e)}"
+        )
+
+@router.post("/sync-subscription")
+async def sync_subscription_from_stripe(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Manually sync subscription from Stripe - temporary until webhooks are set up"""
+    
+    stripe_service = StripeService()
+    
+    # Get the most recent checkout session for this user's email
+    import stripe
+    try:
+        sessions = stripe.checkout.Session.list(
+            customer_email=current_user.email,
+            limit=1
+        )
+        
+        if sessions.data:
+            session = sessions.data[0]
+            if session.status == 'complete' and session.payment_status == 'paid':
+                # Update subscription
+                subscription = db.query(Subscription).filter(Subscription.user_id == current_user.id).first()
+                
+                if subscription:
+                    subscription.stripe_customer = session.customer
+                    subscription.plan = session.metadata.get('plan', 'plus_monthly')
+                    subscription.status = "active"
+                else:
+                    subscription = Subscription(
+                        user_id=current_user.id,
+                        stripe_customer=session.customer,
+                        plan=session.metadata.get('plan', 'plus_monthly'),
+                        status="active"
+                    )
+                    db.add(subscription)
+                
+                db.commit()
+                
+                logger.info("Subscription synced from Stripe", user_id=str(current_user.id), plan=subscription.plan)
+                
+                return {
+                    "success": True,
+                    "plan": subscription.plan,
+                    "status": subscription.status
+                }
+        
+        return {"success": False, "message": "No completed checkout session found"}
+        
+    except Exception as e:
+        logger.error("Subscription sync failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to sync subscription: {str(e)}"
         )
 
 @router.post("/portal")

@@ -18,16 +18,27 @@ PLAN_LIMITS = {
     "free": {
         "trades_per_month": 50,
         "ai_coaching_sessions_per_month": 5,
-        "backtest_runs_per_month": 10,
+        "backtest_runs_per_month": 0,  # No backtesting for free users
+        "history_retention_months": 3,  # Only last 3 months of history
+        "max_custom_tags": 5,  # Maximum 5 custom tags
+        "max_portfolios": 1,  # Only 1 portfolio/account
+        "max_note_length": 500,  # 500 character limit on notes
         "features": {
             "basic_journal": True,
             "basic_analytics": True,
-            "csv_import": True,
+            "csv_import": False,  # Free users can only manually add trades
+            "json_export": False,
+            "excel_export": False,
+            "trade_screenshots": False,  # No screenshots for free users
+            "trade_attachments": False,  # No file attachments
             "paper_trading": True,
             "advanced_analytics": False,
+            "advanced_filters": False,  # Basic filters only
             "unlimited_ai_coach": False,
+            "backtesting_studio": False,  # No backtesting for free users
             "advanced_backtesting": False,
             "pdf_reports": False,
+            "saved_report_templates": False,
             "priority_support": False,
         }
     },
@@ -35,15 +46,26 @@ PLAN_LIMITS = {
         "trades_per_month": None,  # Unlimited
         "ai_coaching_sessions_per_month": None,  # Unlimited
         "backtest_runs_per_month": None,  # Unlimited
+        "history_retention_months": None,  # Unlimited history forever
+        "max_custom_tags": None,  # Unlimited tags
+        "max_portfolios": None,  # Unlimited portfolios
+        "max_note_length": None,  # Unlimited note length
         "features": {
             "basic_journal": True,
             "basic_analytics": True,
-            "csv_import": True,
+            "csv_import": True,  # Plus users can import CSV
+            "json_export": True,  # Plus users can export JSON
+            "excel_export": True,  # Plus users can export Excel
+            "trade_screenshots": True,  # Plus users can add screenshots
+            "trade_attachments": True,  # Plus users can add file attachments
             "paper_trading": True,
             "advanced_analytics": True,
+            "advanced_filters": True,  # Advanced filters and search
             "unlimited_ai_coach": True,
+            "backtesting_studio": True,  # Plus users get backtesting studio
             "advanced_backtesting": True,
             "pdf_reports": True,
+            "saved_report_templates": True,  # Plus users can save report templates
             "priority_support": True,
         }
     }
@@ -64,6 +86,9 @@ def get_user_plan(db: Session, user_id: str) -> str:
 
 def get_plan_limits(plan: str) -> dict:
     """Get limits for a specific plan"""
+    # Handle plus_monthly and plus_yearly as plus plan
+    if plan in ["plus_monthly", "plus_yearly"]:
+        plan = "plus"
     return PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
 
 
@@ -191,4 +216,48 @@ def require_feature(feature: str):
         return current_user
     
     return _require_feature
+
+
+def check_tags_limit(db: Session, user_id: str, tags_list: list) -> dict:
+    """Check if user has reached their custom tags limit"""
+    plan = get_user_plan(db, user_id)
+    limits = get_plan_limits(plan)
+    
+    max_tags = limits.get("max_custom_tags")
+    
+    # Unlimited for Plus plan
+    if max_tags is None:
+        return {"allowed": True, "limit": None, "current": len(tags_list)}
+    
+    # Check if tags exceed limit
+    num_tags = len(tags_list) if tags_list else 0
+    allowed = num_tags <= max_tags
+    
+    return {
+        "allowed": allowed,
+        "limit": max_tags,
+        "current": num_tags
+    }
+
+
+def check_note_length(db: Session, user_id: str, note_text: str) -> dict:
+    """Check if note length exceeds plan limit"""
+    plan = get_user_plan(db, user_id)
+    limits = get_plan_limits(plan)
+    
+    max_length = limits.get("max_note_length")
+    
+    # Unlimited for Plus plan
+    if max_length is None:
+        return {"allowed": True, "limit": None, "current": len(note_text) if note_text else 0}
+    
+    # Check if note exceeds limit
+    note_length = len(note_text) if note_text else 0
+    allowed = note_length <= max_length
+    
+    return {
+        "allowed": allowed,
+        "limit": max_length,
+        "current": note_length
+    }
 

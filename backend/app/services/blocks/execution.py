@@ -110,6 +110,7 @@ class MarketOrderBlock(BlockExecutor):
                     trade = {
                         "entry_time": str(entry_time),
                         "exit_time": str(exit_time),
+                        "symbol": context.symbol,  # Add symbol from context
                         "side": "long" if current_position > 0 else "short",
                         "entry_price": entry_price,
                         "exit_price": exit_price,

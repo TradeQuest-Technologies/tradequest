@@ -1,28 +1,11 @@
 import Link from 'next/link';
+import PublicHeader from "@/components/layout/PublicHeader";
+import PublicFooter from "@/components/layout/PublicFooter";
 
 export default function RiskDisclaimerPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-teal via-brand-dark-teal to-gray-900">
-      {/* Header */}
-      <header className="border-b border-white/10 bg-white/5 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/">
-              <img
-                src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
-                alt="TradeQuest"
-                className="h-10 w-auto"
-              />
-            </Link>
-            <Link
-              href="/auth"
-              className="bg-white text-brand-dark-teal px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              Sign In
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -200,6 +183,8 @@ export default function RiskDisclaimerPage() {
           </Link>
         </div>
       </main>
+
+      <PublicFooter />
     </div>
   );
 }

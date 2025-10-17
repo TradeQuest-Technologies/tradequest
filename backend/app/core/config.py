@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # Security
     JWT_SECRET: str = "your-jwt-secret-key-change-in-production"
     JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRE_MINUTES: int = 30
+    JWT_EXPIRE_MINUTES: int = 1440  # 24 hours (1440 minutes)
     
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
@@ -44,13 +44,18 @@ class Settings(BaseSettings):
     # AWS Secrets Manager
     SECRETS_MANAGER_SECRET_NAME: Optional[str] = None
     
-    # Stripe
-    STRIPE_SECRET_KEY: Optional[str] = None
-    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    # Stripe (loaded from environment or Secrets Manager)
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
     
     # External APIs
     KRAKEN_API_URL: str = "https://api.kraken.com"
     COINBASE_API_URL: str = "https://api.exchange.coinbase.com"
+    
+    # Coinbase OAuth
+    COINBASE_CLIENT_ID: Optional[str] = None
+    COINBASE_CLIENT_SECRET: Optional[str] = None
+    COINBASE_REDIRECT_URI: Optional[str] = None
     
     # Rate Limiting
     RATE_LIMIT_REQUESTS: int = 100

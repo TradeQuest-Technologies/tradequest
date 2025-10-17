@@ -13,7 +13,7 @@ export default function PublicAuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
+  const [authMode, setAuthMode] = useState<'signup' | 'signin' | 'forgot-password'>('signup');
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [show2FAField, setShow2FAField] = useState(false);
   const [tempToken, setTempToken] = useState('');
@@ -35,15 +35,31 @@ export default function PublicAuthPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+          email,
+          is_signup: authMode === 'signup'
+        }),
       });
 
       if (response.ok) {
-        // Always redirect to thank you page for magic link (signup only)
+        // Always redirect to thank you page for magic link
         router.push('/auth/thank-you');
       } else {
         const error = await response.json();
-        toast.error(error.detail || 'Failed to send magic link');
+        // If user exists during signup, show specific message with confirm dialog
+        if (error.detail && error.detail.includes('already exists')) {
+          // Show a custom error message
+          const shouldSignIn = window.confirm(
+            'An account with this email already exists.\n\nWould you like to sign in instead?'
+          );
+          
+          if (shouldSignIn) {
+            setAuthMode('signin');
+            toast.success('Switched to sign in mode');
+          }
+        } else {
+          toast.error(error.detail || 'Failed to send magic link');
+        }
       }
     } catch (error) {
       toast.error('Network error. Please try again.');
@@ -167,11 +183,96 @@ export default function PublicAuthPage() {
     return () => clearInterval(t);
   }, [resendCooldown]);
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    // If 2FA is required but code not provided, show error
+    if (show2FAField && !twoFactorCode) {
+      toast.error('Please enter your verification code');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/v1/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email,
+          two_factor_code: twoFactorCode || undefined
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Check if 2FA is required
+        if (data.requires_2fa) {
+          setShow2FAField(true);
+          setTwoFactorMethod(data.two_factor_method || null);
+          if (data.two_factor_method === 'email') {
+            toast.success('Verification code sent to your email');
+            setResendCooldown(60);
+          } else if (data.two_factor_method === 'totp') {
+            toast.success('Enter the code from your authenticator app');
+          } else {
+            toast.success('2FA verification required');
+          }
+        } else {
+          // Success - reset link sent
+          toast.success('Password reset instructions sent to your email');
+          // Switch back to signin mode after a delay
+          setTimeout(() => {
+            setAuthMode('signin');
+            setShow2FAField(false);
+            setTwoFactorCode('');
+          }, 2000);
+        }
+      } else {
+        toast.error(data.detail || 'Failed to send reset instructions');
+      }
+    } catch (error) {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend2FAForForgotPassword = async () => {
+    if (!email || resendCooldown > 0) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/v1/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        toast.success('Verification code resent');
+        setResendCooldown(60);
+      } else {
+        const data = await response.json();
+        toast.error(data.detail || 'Failed to resend code');
+      }
+    } catch (error) {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-dark-teal to-brand-bright-yellow">
+    <div className="min-h-screen bg-gray-900">
       <div className="flex min-h-screen">
         {/* Left Side - Form */}
-        <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-900">
           <div className="mx-auto w-full max-w-md">
             {/* Header */}
             <div className="mb-8">
@@ -190,44 +291,49 @@ export default function PublicAuthPage() {
                   TradeQuest
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">
-                  {authMode === 'signup' ? 'Create your account' : 'Welcome back'}
+                  {authMode === 'signup' ? 'Create your account' : authMode === 'forgot-password' ? 'Reset your password' : 'Welcome back'}
                 </h2>
                 <p className="text-white/80">
-                  Enter your email to get a magic link
+                  {authMode === 'forgot-password' 
+                    ? 'Enter your email to receive reset instructions'
+                    : 'Enter your email to get a magic link'
+                  }
                 </p>
               </motion.div>
             </div>
 
             {/* Auth Mode Toggle */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="mb-8"
-            >
-              <div className="bg-white/20 rounded-lg p-1 flex">
-                <button
-                  onClick={() => setAuthMode('signup')}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
-                    authMode === 'signup'
-                      ? 'bg-white text-brand-dark-teal shadow-sm'
-                      : 'text-white/80 hover:text-white'
-                  }`}
-                >
-                  Sign Up
-                </button>
-                <button
-                  onClick={() => setAuthMode('signin')}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
-                    authMode === 'signin'
-                      ? 'bg-white text-brand-dark-teal shadow-sm'
-                      : 'text-white/80 hover:text-white'
-                  }`}
-                >
-                  Sign In
-                </button>
-              </div>
-            </motion.div>
+            {authMode !== 'forgot-password' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="mb-8"
+              >
+                <div className="bg-white/20 rounded-lg p-1 flex">
+                  <button
+                    onClick={() => setAuthMode('signup')}
+                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                      authMode === 'signup'
+                        ? 'bg-white text-brand-dark-teal shadow-sm'
+                        : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    Sign Up
+                  </button>
+                  <button
+                    onClick={() => setAuthMode('signin')}
+                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                      authMode === 'signin'
+                        ? 'bg-white text-brand-dark-teal shadow-sm'
+                        : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </motion.div>
+            )}
 
             {/* Form */}
             <motion.div
@@ -243,7 +349,7 @@ export default function PublicAuthPage() {
                     initial={{ opacity: 0, x: 50 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -50 }}
-                    onSubmit={handle2FAVerification}
+                    onSubmit={authMode === 'forgot-password' ? handleForgotPassword : handle2FAVerification}
                     className="space-y-6"
                   >
                     <div className="text-center mb-6">
@@ -281,7 +387,7 @@ export default function PublicAuthPage() {
                     {twoFactorMethod === 'email' && (
                       <button
                         type="button"
-                        onClick={handleResendCode}
+                        onClick={authMode === 'forgot-password' ? handleResend2FAForForgotPassword : handleResendCode}
                         disabled={resendCooldown > 0 || isLoading}
                         className="w-full text-sm text-brand-dark-teal hover:text-brand-dark-teal/80 disabled:text-gray-400"
                       >
@@ -294,7 +400,12 @@ export default function PublicAuthPage() {
                       disabled={isLoading || twoFactorCode.length !== 6}
                       className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-dark-teal hover:bg-brand-dark-teal/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-dark-teal disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      {isLoading ? 'Verifying...' : 'Verify & Sign In'}
+                      {isLoading 
+                        ? 'Verifying...' 
+                        : authMode === 'forgot-password'
+                          ? 'Verify & Send Reset Link'
+                          : 'Verify & Sign In'
+                      }
                     </button>
 
                     <button
@@ -305,7 +416,7 @@ export default function PublicAuthPage() {
                       }}
                       className="w-full text-sm text-gray-600 hover:text-gray-800 transition-colors"
                     >
-                      Back to login
+                      {authMode === 'forgot-password' ? 'Back to forgot password' : 'Back to login'}
                     </button>
                   </motion.form>
                 ) : (
@@ -314,7 +425,13 @@ export default function PublicAuthPage() {
                     initial={{ opacity: 0, x: 50 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -50 }}
-                    onSubmit={authMode === 'signin' ? handlePasswordLogin : handleSendMagicLink}
+                    onSubmit={
+                      authMode === 'forgot-password' 
+                        ? handleForgotPassword 
+                        : authMode === 'signin' 
+                          ? handlePasswordLogin 
+                          : handleSendMagicLink
+                    }
                     className="space-y-6"
                   >
                     <div>
@@ -333,50 +450,61 @@ export default function PublicAuthPage() {
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                          className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
                           placeholder="Enter your email"
                         />
                       </div>
                     </div>
 
                     {authMode === 'signin' && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                          Password
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <LockClosedIcon className="h-5 w-5 text-gray-400" />
+                      <>
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                            Password
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <LockClosedIcon className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                              id="password"
+                              name="password"
+                              type={showPassword ? 'text' : 'password'}
+                              autoComplete="current-password"
+                              required
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                              placeholder="Enter your password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            >
+                              {showPassword ? (
+                                <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                              ) : (
+                                <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                              )}
+                            </button>
                           </div>
-                          <input
-                            id="password"
-                            name="password"
-                            type={showPassword ? 'text' : 'password'}
-                            autoComplete="current-password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
-                            placeholder="Enter your password"
-                          />
+                        </motion.div>
+                        <div className="flex items-center justify-end">
                           <button
                             type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            onClick={() => setAuthMode('forgot-password')}
+                            className="text-sm text-brand-dark-teal hover:text-brand-dark-teal/80 font-medium"
                           >
-                            {showPassword ? (
-                              <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                            ) : (
-                              <EyeIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                            )}
+                            Forgot password?
                           </button>
                         </div>
-                      </motion.div>
+                      </>
                     )}
 
                     {authMode === 'signin' && (
@@ -400,8 +528,25 @@ export default function PublicAuthPage() {
                       disabled={isLoading || !email || (authMode === 'signin' && !password)}
                       className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-dark-teal hover:bg-brand-dark-teal/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-dark-teal disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      {isLoading ? 'Processing...' : authMode === 'signin' ? 'Sign In' : 'Send Magic Link'}
+                      {isLoading 
+                        ? 'Processing...' 
+                        : authMode === 'forgot-password' 
+                          ? 'Send Reset Link'
+                          : authMode === 'signin' 
+                            ? 'Sign In' 
+                            : 'Send Magic Link'
+                      }
                     </button>
+
+                    {authMode === 'forgot-password' && (
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode('signin')}
+                        className="w-full text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                      >
+                        Back to sign in
+                      </button>
+                    )}
                   </motion.form>
                 )}
               </AnimatePresence>
@@ -414,13 +559,20 @@ export default function PublicAuthPage() {
                     </div>
                     <div className="ml-3">
                       <h3 className="text-sm font-medium text-blue-800">
-                        {authMode === 'signin' ? 'Password Authentication' : 'Magic Link Signup'}
+                        {authMode === 'forgot-password' 
+                          ? 'Reset Your Password' 
+                          : authMode === 'signin' 
+                            ? 'Password Authentication' 
+                            : 'Magic Link Signup'
+                        }
                       </h3>
                       <div className="mt-2 text-sm text-blue-700">
                         <p>
-                          {authMode === 'signin' 
-                            ? 'Sign in with your email and password. 2FA will be required if enabled.'
-                            : "We'll send you a magic link to create your account. No password required!"
+                          {authMode === 'forgot-password'
+                            ? "We'll send you a link to reset your password. The link expires in 1 hour."
+                            : authMode === 'signin' 
+                              ? 'Sign in with your email and password. 2FA will be required if enabled.'
+                              : "We'll send you a magic link to create your account. No password required!"
                           }
                         </p>
                       </div>
@@ -454,57 +606,71 @@ export default function PublicAuthPage() {
           </div>
         </div>
 
-        {/* Right Side - Coming Soon Graphic */}
-        <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:items-center lg:px-8">
+        {/* Right Side - Visual Design */}
+        <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:items-center lg:px-8 bg-gradient-to-br from-brand-dark-teal via-brand-teal to-gray-900 relative overflow-hidden">
+          {/* Animated background elements */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-20 left-20 w-72 h-72 bg-brand-bright-yellow rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-20 right-20 w-72 h-72 bg-brand-teal rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          </div>
+          
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-center max-w-md"
+            className="relative z-10 text-center max-w-lg"
           >
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-white/20 rounded-3xl transform rotate-6"></div>
-              <div className="relative bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
-                <div className="space-y-4">
-                  <div className="flex justify-center space-x-4">
-                    <ChartBarIcon className="h-12 w-12 text-white" />
-                    <ShieldCheckIcon className="h-12 w-12 text-white" />
+            {/* Main visual card */}
+            <div className="relative mb-12">
+              <div className="bg-white/10 backdrop-blur-md rounded-3xl p-12 border border-white/20 shadow-2xl">
+                <div className="space-y-6">
+                  {/* Icon grid */}
+                  <div className="grid grid-cols-2 gap-6 mb-8">
+                    <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                      <ChartBarIcon className="h-12 w-12 text-brand-bright-yellow mx-auto" />
+                      <p className="text-white text-sm mt-2 font-medium">Analytics</p>
+                    </div>
+                    <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                      <ShieldCheckIcon className="h-12 w-12 text-brand-bright-yellow mx-auto" />
+                      <p className="text-white text-sm mt-2 font-medium">Secure</p>
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-white">
-                    Trading Dashboard
+                  
+                  <h3 className="text-3xl font-bold text-white">
+                    Your Trading Journey Starts Here
                   </h3>
-                  <p className="text-white/80">
-                    Coming Soon - Advanced analytics, AI coaching, and comprehensive trade tracking
+                  <p className="text-white/90 text-lg leading-relaxed">
+                    Join traders who are improving their performance with AI-powered insights and comprehensive analytics.
                   </p>
                 </div>
               </div>
             </div>
             
+            {/* Features list */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
               className="space-y-4"
             >
-              <h4 className="text-lg font-semibold text-white">What's Inside:</h4>
-              <ul className="space-y-2 text-white/80 text-left">
-                <li className="flex items-center">
-                  <div className="w-2 h-2 bg-brand-bright-yellow rounded-full mr-3"></div>
-                  AI-powered trading coach
-                </li>
-                <li className="flex items-center">
-                  <div className="w-2 h-2 bg-brand-bright-yellow rounded-full mr-3"></div>
-                  Advanced performance analytics
-                </li>
-                <li className="flex items-center">
-                  <div className="w-2 h-2 bg-brand-bright-yellow rounded-full mr-3"></div>
-                  Comprehensive trade journal
-                </li>
-                <li className="flex items-center">
-                  <div className="w-2 h-2 bg-brand-bright-yellow rounded-full mr-3"></div>
-                  Risk management tools
-                </li>
-              </ul>
+              <div className="grid grid-cols-2 gap-4 text-left">
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                  <div className="text-brand-bright-yellow font-bold mb-1">50+</div>
+                  <div className="text-white/80 text-sm">Free Trades/Month</div>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                  <div className="text-brand-bright-yellow font-bold mb-1">AI Coach</div>
+                  <div className="text-white/80 text-sm">Personalized Insights</div>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                  <div className="text-brand-bright-yellow font-bold mb-1">Analytics</div>
+                  <div className="text-white/80 text-sm">Real-time Metrics</div>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                  <div className="text-brand-bright-yellow font-bold mb-1">Backtest</div>
+                  <div className="text-white/80 text-sm">Strategy Testing</div>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         </div>

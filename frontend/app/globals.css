@@ -26,6 +26,54 @@
     scrollbar-width: thin;
     scrollbar-color: rgba(100, 116, 139, 0.3) transparent;
   }
+
+  /* Brand-themed scrollbar for conversations */
+  .brand-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .brand-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 5px;
+    margin: 4px 0;
+  }
+
+  .brand-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 95, 115, 0.4); /* Dark Teal */
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: all 0.2s ease;
+  }
+
+  .brand-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 95, 115, 0.7); /* Darker on hover */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .brand-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 95, 115, 0.4) rgba(0, 0, 0, 0.05);
+  }
+
+  /* Dark mode support */
+  .dark .brand-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .dark .brand-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 95, 115, 0.5);
+  }
+  
+  .dark .brand-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 95, 115, 0.8);
+  }
+  
+  .dark .brand-scrollbar {
+    scrollbar-color: rgba(0, 95, 115, 0.5) rgba(255, 255, 255, 0.05);
+  }
 }
 
 @layer base {

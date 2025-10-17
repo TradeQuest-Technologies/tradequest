@@ -23,6 +23,7 @@ class CodeExecutor:
     def __init__(self):
         self.timeout = 30
         self.max_output_size = 100000
+        self.installed_packages = set()  # Track installed packages
     
     def execute(self, code: str, context_data: Dict[str, Any] = None) -> Dict[str, Any]:
         """
@@ -33,14 +34,29 @@ class CodeExecutor:
         """
         
         try:
-            # Basic security check
+            # Check for pip install commands and execute them first
             import re
+            import subprocess
+            
+            pip_pattern = r'pip\s+install\s+([\w\-\[\]>=<.,\s]+)'
+            pip_matches = re.findall(pip_pattern, code)
+            
+            for packages in pip_matches:
+                try:
+                    # Install packages
+                    subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--quiet'] + packages.split())
+                    logger.info(f"Installed packages: {packages}")
+                    self.installed_packages.update(packages.split())
+                except Exception as e:
+                    logger.warning(f"Failed to install {packages}: {e}")
+            
+            # Remove pip install lines from code
+            code = re.sub(pip_pattern, '', code)
+            
+            # Basic security check (but allow subprocess for pip)
             FORBIDDEN_PATTERNS = [
                 r'\bimport\s+os\b',
-                r'\bimport\s+sys\b',
-                r'\bimport\s+subprocess\b',
                 r'\bfrom\s+os\b',
-                r'\bfrom\s+sys\b',
                 r'\bopen\s*\(',
                 r'\beval\s*\(',
                 r'\bexec\s*\(',

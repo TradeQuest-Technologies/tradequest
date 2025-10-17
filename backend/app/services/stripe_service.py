@@ -9,8 +9,25 @@ import structlog
 
 logger = structlog.get_logger()
 
-# Initialize Stripe
-stripe.api_key = settings.STRIPE_SECRET_KEY
+# Initialize Stripe at module level
+if settings.STRIPE_SECRET_KEY:
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    print(f"[STARTUP] Stripe initialized at module level with key: {settings.STRIPE_SECRET_KEY[:10]}...")
+    print(f"[STARTUP] stripe.api_key set: {stripe.api_key is not None}")
+    logger.info("Stripe initialized at module level")
+else:
+    print("[STARTUP ERROR] STRIPE_SECRET_KEY not available at module level")
+    logger.warning("STRIPE_SECRET_KEY not available at module level")
+
+# Fix for Stripe 7.8.0 bug - must import checkout explicitly AFTER setting api_key
+# Don't import here - will import in the function where it's used
+
+def _ensure_stripe_initialized():
+    """Ensure Stripe is properly initialized"""
+    if not stripe.api_key:
+        if not settings.STRIPE_SECRET_KEY:
+            raise ValueError("STRIPE_SECRET_KEY is not configured")
+        stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class StripeService:
     """Service for handling Stripe billing operations"""
@@ -34,10 +51,31 @@ class StripeService:
                     "Email support"
                 ]
             },
-            "plus": {
+            "plus_monthly": {
                 "name": "Plus",
                 "price": 29,
-                "price_id": "price_1SEDPKEc0UfOtXXQWVbLwv3M",  # Live Stripe Price ID
+                "interval": "month",
+                "price_id": "price_1SEDPKEc0UfOtXXQWVbLwv3M",  # Live Stripe Price ID (Monthly)
+                "features": [
+                    "Unlimited trades",
+                    "Advanced trade journal with screenshots",
+                    "Comprehensive performance metrics & analytics",
+                    "Unlimited AI trading coach sessions",
+                    "Advanced backtesting studio",
+                    "Custom strategy builder",
+                    "Advanced charts with technical indicators",
+                    "Risk management & discipline alerts",
+                    "PDF reports and analytics export",
+                    "Priority support",
+                    "Custom tags and categories",
+                    "Trade session analysis with heatmaps"
+                ]
+            },
+            "plus_yearly": {
+                "name": "Plus",
+                "price": 290,
+                "interval": "year",
+                "price_id": "price_1SErESEc0UfOtXXQB8KqnhnL",  # Live Stripe Price ID (Yearly)
                 "features": [
                     "Unlimited trades",
                     "Advanced trade journal with screenshots",
@@ -65,32 +103,38 @@ class StripeService:
     ) -> Dict[str, Any]:
         """Create Stripe checkout session"""
         
-        if plan not in ["plus"]:
-            raise ValueError("Invalid plan for checkout. Only Plus plan is available.")
+        logger.info("StripeService.create_checkout_session called", user_id=user_id, plan=plan)
+        
+        _ensure_stripe_initialized()
+        logger.info("Stripe initialization check passed")
+        
+        if plan not in ["plus_monthly", "plus_yearly"]:
+            raise ValueError("Invalid plan for checkout. Only Plus monthly and yearly plans are available.")
         
         plan_config = self.plans[plan]
+        logger.info("Plan config retrieved", price_id=plan_config.get("price_id"))
         
         try:
-            session = stripe.checkout.Session.create(
+            # Import Session class directly from stripe.checkout to work around Stripe 7.8.0 bug
+            from stripe.checkout import Session as StripeSession
+            
+            logger.info("About to call StripeSession.create")
+            logger.info("StripeSession", exists=StripeSession is not None)
+            logger.info("StripeSession.create", exists=hasattr(StripeSession, 'create'))
+            
+            # Use the price_id directly instead of creating price_data
+            # Use StripeSession.create() - direct import of Session class
+            session = StripeSession.create(
                 payment_method_types=['card'],
                 line_items=[{
-                    'price_data': {
-                        'currency': 'usd',
-                        'product_data': {
-                            'name': f'TradeQuest {plan_config["name"]}',
-                            'description': f'TradeQuest {plan_config["name"]} Plan',
-                        },
-                        'unit_amount': plan_config["price"] * 100,  # Convert to cents
-                        'recurring': {
-                            'interval': 'month',
-                        },
-                    },
+                    'price': plan_config["price_id"],
                     'quantity': 1,
                 }],
                 mode='subscription',
                 success_url=success_url,
                 cancel_url=cancel_url,
                 customer_email=user_email,
+                allow_promotion_codes=True,  # Enable promo codes for beta testers
                 metadata={
                     'user_id': user_id,
                     'plan': plan
@@ -108,9 +152,14 @@ class StripeService:
         except stripe.error.StripeError as e:
             logger.error("Stripe checkout error", error=str(e))
             raise Exception(f"Failed to create checkout session: {str(e)}")
+        except Exception as e:
+            logger.error("Unexpected error in checkout", error=str(e), error_type=type(e).__name__)
+            raise
     
     def create_customer_portal_session(self, customer_id: str, return_url: str) -> Dict[str, Any]:
         """Create customer portal session for subscription management"""
+        
+        _ensure_stripe_initialized()
         
         try:
             session = stripe.billing_portal.Session.create(
@@ -128,6 +177,8 @@ class StripeService:
     
     def get_subscription(self, subscription_id: str) -> Optional[Dict[str, Any]]:
         """Get subscription details from Stripe"""
+        
+        _ensure_stripe_initialized()
         
         try:
             subscription = stripe.Subscription.retrieve(subscription_id)
@@ -148,6 +199,8 @@ class StripeService:
     def cancel_subscription(self, subscription_id: str) -> bool:
         """Cancel subscription"""
         
+        _ensure_stripe_initialized()
+        
         try:
             stripe.Subscription.delete(subscription_id)
             logger.info("Subscription canceled", subscription_id=subscription_id)
@@ -163,6 +216,8 @@ class StripeService:
     
     def verify_webhook_signature(self, payload: str, signature: str) -> bool:
         """Verify webhook signature"""
+        
+        _ensure_stripe_initialized()
         
         try:
             stripe.Webhook.construct_event(

@@ -104,7 +104,7 @@ class EmailService:
     async def send_verification_email(self, to_email: str, verification_token: str) -> bool:
         """Send email verification email"""
         
-        verification_url = f"{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/auth/verify?token={verification_token}"
+        verification_url = f"{settings.FRONTEND_URL}/auth/verify?token={verification_token}"
         
         html_content = f"""
         <html>
@@ -154,6 +154,12 @@ class EmailService:
     
     async def send_magic_link_email(self, to_email: str, magic_link_url: str) -> bool:
         """Send magic link email for passwordless login"""
+        
+        # Debug logging to see what URL is being used
+        logger.info("Magic link email debug", 
+                   frontend_url=settings.FRONTEND_URL, 
+                   magic_link_url=magic_link_url,
+                   to_email=to_email)
         
         html_content = f"""
         <html>
@@ -237,7 +243,7 @@ class EmailService:
     async def send_password_reset_email(self, to_email: str, reset_token: str) -> bool:
         """Send password reset email"""
         
-        reset_url = f"{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/auth/reset-password?token={reset_token}"
+        reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={reset_token}"
         
         html_content = f"""
         <html>

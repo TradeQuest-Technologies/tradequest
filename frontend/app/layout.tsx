@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: 'Trading journal, analytics, and AI coaching platform for traders.',
   keywords: 'trading, journal, backtesting, analysis, crypto, stocks',
   icons: {
-    icon: '/images/logos/Transparent/TradeQuest [Icon Only] [Colored] [Square].png',
+    icon: '/images/logos/Transparent/TradeQuest%20%5BIcon%20Only%5D%20%5BColored%5D%20%5BSquare%5D.png',
   },
 }
 

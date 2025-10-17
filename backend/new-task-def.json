@@ -1,0 +1,109 @@
+﻿{
+    "family":  "tradequest-prod-backend",
+    "networkMode":  "awsvpc",
+    "requiresCompatibilities":  [
+                                    "FARGATE"
+                                ],
+    "cpu":  "512",
+    "memory":  "1024",
+    "executionRoleArn":  "arn:aws:iam::759316875712:role/tradequest-prod-ecs-task-execution-role",
+    "taskRoleArn":  "arn:aws:iam::759316875712:role/tradequest-prod-ecs-task-s3-role",
+    "containerDefinitions":  [
+                                 {
+                                     "name":  "backend",
+                                     "image":  "759316875712.dkr.ecr.us-east-1.amazonaws.com/tradequest-prod-backend:latest",
+                                     "cpu":  0,
+                                     "portMappings":  [
+                                                          {
+                                                              "containerPort":  8000,
+                                                              "hostPort":  8000,
+                                                              "protocol":  "tcp"
+                                                          }
+                                                      ],
+                                     "essential":  true,
+                                     "environment":  [
+                                                         {
+                                                             "name":  "AWS_REGION",
+                                                             "value":  "us-east-1"
+                                                         },
+                                                         {
+                                                             "name":  "SECRETS_MANAGER_SECRET_NAME",
+                                                             "value":  "tradequest-prod/app"
+                                                         },
+                                                         {
+                                                             "name":  "DEBUG",
+                                                             "value":  "false"
+                                                         },
+                                                         {
+                                                             "name":  "LOG_LEVEL",
+                                                             "value":  "INFO"
+                                                         },
+                                                         {
+                                                             "name":  "ENVIRONMENT",
+                                                             "value":  "prod"
+                                                         },
+                                                         {
+                                                             "name":  "ALLOWED_HOSTS",
+                                                             "value":  "[\"*\"]"
+                                                         }
+                                                     ],
+                                     "mountPoints":  [
+
+                                                     ],
+                                     "volumesFrom":  [
+
+                                                     ],
+                                     "secrets":  [
+                                                     {
+                                                         "name":  "DATABASE_URL",
+                                                         "valueFrom":  "arn:aws:secretsmanager:us-east-1:759316875712:secret:tradequest-prod/database-R4pTCg:database_url::"
+                                                     },
+                                                     {
+                                                         "name":  "DATABASE_PASSWORD",
+                                                         "valueFrom":  "arn:aws:secretsmanager:us-east-1:759316875712:secret:tradequest-prod/database-R4pTCg:password::"
+                                                     },
+                                                     {
+                                                         "name":  "REDIS_URL",
+                                                         "valueFrom":  "arn:aws:secretsmanager:us-east-1:759316875712:secret:tradequest-prod/redis-34m69f:host::"
+                                                     },
+                                                     {
+                                                         "name":  "REDIS_PASSWORD",
+                                                         "valueFrom":  "arn:aws:secretsmanager:us-east-1:759316875712:secret:tradequest-prod/redis-34m69f:password::"
+                                                     },
+                                                     {
+                                                         "name":  "S3_BUCKET_NAME",
+                                                         "valueFrom":  "arn:aws:secretsmanager:us-east-1:759316875712:secret:tradequest-prod/s3-wNCp76:bucket_name::"
+                                                     },
+                                                     {
+                                                         "name":  "STRIPE_SECRET_KEY",
+                                                         "valueFrom":  "arn:aws:secretsmanager:us-east-1:759316875712:secret:tradequest-prod/stripe-yLgHjR:stripe_secret_key::"
+                                                     },
+                                                     {
+                                                         "name":  "STRIPE_WEBHOOK_SECRET",
+                                                         "valueFrom":  "arn:aws:secretsmanager:us-east-1:759316875712:secret:tradequest-prod/stripe-yLgHjR:stripe_webhook_secret::"
+                                                     }
+                                                 ],
+                                     "logConfiguration":  {
+                                                              "logDriver":  "awslogs",
+                                                              "options":  {
+                                                                              "awslogs-group":  "/ecs/tradequest-prod-backend",
+                                                                              "awslogs-region":  "us-east-1",
+                                                                              "awslogs-stream-prefix":  "ecs"
+                                                                          }
+                                                          },
+                                     "healthCheck":  {
+                                                         "command":  [
+                                                                         "CMD-SHELL",
+                                                                         "curl -f http://localhost:8000/health || exit 1"
+                                                                     ],
+                                                         "interval":  30,
+                                                         "timeout":  5,
+                                                         "retries":  3,
+                                                         "startPeriod":  60
+                                                     },
+                                     "systemControls":  [
+
+                                                        ]
+                                 }
+                             ]
+}

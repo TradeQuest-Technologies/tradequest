@@ -9,6 +9,8 @@ import {
   ArrowRightIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import PublicHeader from "@/components/layout/PublicHeader";
+import PublicFooter from "@/components/layout/PublicFooter";
 
 export default function PublicPricingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -20,17 +22,26 @@ export default function PublicPricingPage() {
       description: "Perfect for getting started with trading analysis",
       features: [
         "Up to 50 trades per month",
-        "Basic trade journal with notes and tags",
+        "Basic trade journal with text notes (max 500 chars)",
         "Core performance metrics (Win rate, P&L, Profit factor)",
         "Paper trading simulator",
-        "CSV import/export",
+        "Manual trade entry only",
+        "Last 3 months of trade history",
+        "Up to 5 custom tags",
         "Basic charts and visualizations",
+        "5 AI coaching sessions per month",
         "Email support"
       ],
       limitations: [
         "Limited to 50 trades per month",
-        "5 AI coaching sessions per month",
-        "Basic analytics only"
+        "Only last 3 months of history",
+        "Manual trade entry only (no CSV import)",
+        "No trade screenshots or attachments",
+        "No backtesting studio",
+        "Max 5 custom tags",
+        "Notes limited to 500 characters",
+        "Basic filters only",
+        "5 AI coaching sessions per month"
       ],
       cta: "Get Started Free",
       ctaLink: "/auth",
@@ -42,22 +53,24 @@ export default function PublicPricingPage() {
       description: "For serious traders who want unlimited analysis",
       features: [
         "Unlimited trades",
-        "Advanced trade journal with screenshots",
+        "Unlimited trade history (forever)",
+        "Unlimited custom tags & categories",
+        "Advanced trade journal with screenshots & attachments",
+        "Unlimited notes (no character limit)",
         "Comprehensive performance metrics & analytics",
         "Unlimited AI trading coach sessions",
         "Advanced backtesting studio",
-        "Custom strategy builder",
-        "Advanced charts with technical indicators",
-        "Risk management & discipline alerts",
-        "PDF reports and analytics export",
-        "Priority support",
-        "Custom tags and categories",
-        "Trade session analysis with heatmaps"
+        "Paper trading simulator",
+        "CSV/JSON/Excel import & export",
+        "PDF reports with custom templates",
+        "Advanced filters & search",
+        "Priority email support"
       ],
       limitations: [],
       cta: "Start Plus Trial",
-      ctaLink: "/auth?plan=plus",
-      popular: true
+      ctaLink: "/auth",
+      popular: true,
+      planId: "plus" // Used for API calls
     }
   ];
 
@@ -95,43 +108,7 @@ export default function PublicPricingPage() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Navigation */}
-      <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Link href="/">
-                  <img
-                    src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
-                    alt="TradeQuest"
-                    className="h-10 w-auto"
-                  />
-                </Link>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/features" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Features
-                </Link>
-                <Link href="/pricing" className="text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium">
-                  Pricing
-                </Link>
-                <Link href="/docs" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Docs
-                </Link>
-                <Link href="/contact" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Contact
-                </Link>
-                <Link href="/auth" className="bg-brand-bright-yellow text-gray-900 hover:bg-brand-bright-yellow/90 px-6 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl">
-                  Get Started
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <PublicHeader currentPage="pricing" />
 
       {/* Hero Section */}
       <section className="py-24 bg-gradient-to-br from-gray-900 via-brand-dark-teal/20 to-gray-900">
@@ -211,7 +188,7 @@ export default function PublicPricingPage() {
                   <h3 className="text-3xl font-bold text-white mb-3">{plan.name}</h3>
                   <p className="text-gray-400 mb-6">{plan.description}</p>
                   <div className="mb-4">
-                    <span className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-bright-yellow">
+                    <span className="text-5xl font-bold text-white">
                       ${billingCycle === 'monthly' ? plan.price.monthly : Math.floor(plan.price.yearly / 12)}
                     </span>
                     <span className="text-gray-400 ml-2 text-lg">
@@ -317,46 +294,7 @@ export default function PublicPricingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-xl font-bold text-gradient mb-4">TradeQuest</h3>
-              <p className="text-gray-400">
-                The trading platform that focuses on education, discipline, and continuous improvement.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/features" className="hover:text-white">Features</Link></li>
-                <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
-                <li><Link href="/docs" className="hover:text-white">Documentation</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/about" className="hover:text-white">About</Link></li>
-                <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
-                <li><Link href="/careers" className="hover:text-white">Careers</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
-                <li><Link href="/disclaimer" className="hover:text-white">Risk Disclaimer</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 TradeQuest. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

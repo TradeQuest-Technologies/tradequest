@@ -5,6 +5,10 @@ FROM node:20-bullseye-slim AS build
 
 WORKDIR /app
 
+# Build argument for API URL
+ARG NEXT_PUBLIC_API_URL=https://api.tradequest.tech
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Install dependencies
 COPY package*.json ./
 RUN npm ci

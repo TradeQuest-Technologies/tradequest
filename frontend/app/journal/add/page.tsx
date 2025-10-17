@@ -1,18 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sidebar } from '../../../components/layout/Sidebar'
 import { Header } from '../../../components/layout/Header'
 import { Button } from '../../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card'
 import { VenueSelector } from '../../../components/VenueSelector'
+import UpgradeModal from '../../../components/modals/UpgradeModal'
 import { ArrowLeftIcon, PlusIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 
 export default function AddTrade() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [userPlan, setUserPlan] = useState<string>('free')
   const [formData, setFormData] = useState({
     venue: 'MANUAL',
     symbol: '',
@@ -30,6 +33,34 @@ export default function AddTrade() {
     tags: '',
     chart_image: null as File | null
   })
+
+  // Check user plan on component mount
+  useEffect(() => {
+    const checkUserPlan = async () => {
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
+      if (!token) {
+        router.push('/auth')
+        return
+      }
+
+      try {
+        const response = await fetch('/api/v1/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setUserPlan(data.plan || 'free')
+        }
+      } catch (error) {
+        console.error('Failed to fetch user plan:', error)
+      }
+    }
+
+    checkUserPlan()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,6 +117,12 @@ export default function AddTrade() {
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Check if user has screenshot access
+    if (userPlan === 'free' || !userPlan) {
+      router.push('/upgrade?feature=Trade Screenshots')
+      return
+    }
+    
     const file = e.target.files?.[0] || null
     setFormData({...formData, chart_image: file})
   }
@@ -503,6 +540,14 @@ export default function AddTrade() {
           </div>
         </main>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="Trade Screenshots"
+        currentPlan={userPlan}
+      />
     </div>
   )
 }

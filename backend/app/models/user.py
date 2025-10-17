@@ -25,13 +25,17 @@ class User(Base):
     
     # Security fields
     totp_enabled = Column(Boolean, default=False)
+    totp_secret = Column(String)  # Encrypted TOTP secret
+    backup_codes = Column(Text)  # JSON array of backup codes (hashed)
     password_hash = Column(String)
+    password_history = Column(Text)  # JSON array of previous password hashes
+    last_password_change = Column(DateTime(timezone=True))
     
     # Relationships
     subscription = relationship("Subscription", back_populates="user", uselist=False)
-    api_keys = relationship("ApiKey", back_populates="user")
     trades = relationship("Trade", back_populates="user")
     journal_entries = relationship("JournalEntry", back_populates="user")
+    api_keys = relationship("ApiKey", back_populates="user")
     strategies = relationship("Strategy", back_populates="user")
     backtests = relationship("Backtest", back_populates="user")
     daily_metrics = relationship("DailyMetric", back_populates="user")

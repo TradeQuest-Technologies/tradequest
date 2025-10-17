@@ -3,6 +3,7 @@ Journal endpoints
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Body
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import structlog
@@ -11,7 +12,7 @@ import io
 import json
 import math
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -104,6 +105,14 @@ async def ingest_csv(
     db: Session = Depends(get_db)
 ):
     """Import trades from CSV file"""
+    
+    # Check if user has CSV import access
+    from app.core.plan_limits import check_feature_access
+    if not check_feature_access(db, current_user.id, "csv_import"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSV import is only available for Plus users. Please upgrade your plan."
+        )
     
     if not file.filename.endswith('.csv'):
         raise HTTPException(
@@ -422,6 +431,14 @@ async def confirm_import(
 ):
     """Confirm and save the previewed trades to database"""
     
+    # Check if user has CSV import access
+    from app.core.plan_limits import check_feature_access
+    if not check_feature_access(db, current_user.id, "csv_import"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSV import is only available for Plus users. Please upgrade your plan."
+        )
+    
     try:
         imported_count = 0
         skipped_count = 0
@@ -563,6 +580,14 @@ async def create_trade(
         # Handle chart image upload
         chart_image_path = None
         if chart_image:
+            # Check if user has screenshot access
+            from app.core.plan_limits import check_feature_access
+            if not check_feature_access(db, current_user.id, "trade_screenshots"):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Trade screenshots are only available for Plus users. Please upgrade your plan."
+                )
+            
             file_service = FileUploadService()
             chart_image_path = await file_service.upload_chart_image(chart_image, str(current_user.id))
         
@@ -649,6 +674,17 @@ async def get_trades(
     logger.info(f"User ID: {current_user.id}, Limit: {limit}, Symbol: {symbol}, Date Range: {start_date} to {end_date}")
     
     query = db.query(Trade).filter(Trade.user_id == current_user.id)
+    
+    # Apply history retention limit for free users
+    from app.core.plan_limits import get_user_plan, get_plan_limits
+    user_plan = get_user_plan(db, current_user.id)
+    plan_limits = get_plan_limits(user_plan)
+    
+    if plan_limits.get("history_retention_months"):
+        retention_months = plan_limits["history_retention_months"]
+        cutoff_date = datetime.utcnow() - timedelta(days=retention_months * 30)
+        query = query.filter(Trade.filled_at >= cutoff_date)
+        logger.info(f"Applied {retention_months}-month history limit for {user_plan} plan (cutoff: {cutoff_date})")
     
     if symbol:
         query = query.filter(Trade.symbol == symbol)
@@ -953,6 +989,28 @@ async def create_journal_entry(
 ):
     """Create a journal entry"""
     
+    # Check tag limit
+    if entry_data.tags:
+        from app.core.plan_limits import check_tags_limit
+        tags_check = check_tags_limit(db, current_user.id, entry_data.tags)
+        
+        if not tags_check["allowed"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Tag limit exceeded. You can use up to {tags_check['limit']} tags on the free plan. Upgrade to Plus for unlimited tags."
+            )
+    
+    # Check note length limit
+    if entry_data.note:
+        from app.core.plan_limits import check_note_length
+        note_check = check_note_length(db, current_user.id, entry_data.note)
+        
+        if not note_check["allowed"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Note too long. Free plan allows up to {note_check['limit']} characters. Your note is {note_check['current']} characters. Upgrade to Plus for unlimited note length."
+            )
+    
     # Verify trade belongs to user if trade_id provided
     if entry_data.trade_id:
         trade = db.query(Trade).filter(
@@ -1152,4 +1210,113 @@ async def ingest_csv(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to import CSV: {str(e)}"
+        )
+
+
+@router.get("/export")
+async def export_trades(
+    format: str = "csv",  # csv, json, excel
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Export user's trades in various formats
+    
+    Args:
+        format: Export format (csv, json, excel)
+    """
+    from app.core.plan_limits import get_user_plan, check_feature_access
+    
+    # Check if user has access to advanced export formats
+    user_plan = get_user_plan(db, current_user.id)
+    
+    if format == "json" and not check_feature_access(db, current_user.id, "json_export"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="JSON export is only available for Plus users. Please upgrade your plan."
+        )
+    
+    if format == "excel" and not check_feature_access(db, current_user.id, "excel_export"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Excel export is only available for Plus users. Please upgrade your plan."
+        )
+    
+    # Get trades with history retention applied
+    query = db.query(Trade).filter(Trade.user_id == current_user.id)
+    
+    # Apply history retention limit for free users
+    from app.core.plan_limits import get_plan_limits
+    plan_limits = get_plan_limits(user_plan)
+    
+    if plan_limits.get("history_retention_months"):
+        retention_months = plan_limits["history_retention_months"]
+        cutoff_date = datetime.utcnow() - timedelta(days=retention_months * 30)
+        query = query.filter(Trade.filled_at >= cutoff_date)
+    
+    trades = query.order_by(Trade.filled_at.desc()).all()
+    
+    if not trades:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No trades found to export"
+        )
+    
+    # Convert trades to dict
+    trades_data = []
+    for trade in trades:
+        trades_data.append({
+            "id": trade.id,
+            "venue": trade.venue,
+            "symbol": trade.symbol,
+            "side": trade.side,
+            "quantity": float(trade.qty),
+            "avg_price": float(trade.avg_price),
+            "fees": float(trade.fees),
+            "pnl": float(trade.pnl),
+            "filled_at": trade.filled_at.isoformat() if trade.filled_at else None,
+            "account": trade.account,
+            "tags": trade.tags,
+        })
+    
+    # Export based on format
+    if format == "csv":
+        df = pd.DataFrame(trades_data)
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=tradequest_trades_{datetime.now().strftime('%Y%m%d')}.csv"}
+        )
+    
+    elif format == "json":
+        output = io.BytesIO()
+        output.write(json.dumps(trades_data, indent=2).encode('utf-8'))
+        output.seek(0)
+        
+        return StreamingResponse(
+            output,
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename=tradequest_trades_{datetime.now().strftime('%Y%m%d')}.json"}
+        )
+    
+    elif format == "excel":
+        df = pd.DataFrame(trades_data)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Trades')
+        output.seek(0)
+        
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=tradequest_trades_{datetime.now().strftime('%Y%m%d')}.xlsx"}
+        )
+    
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid format. Supported formats: csv, json, excel"
         )

@@ -28,6 +28,27 @@ import {
 } from '@heroicons/react/24/outline'
 import { CheckCircleIcon as SolidCheckCircle } from '@heroicons/react/24/solid'
 import { formatDateTime } from '../../lib/utils'
+import { getAuthToken } from '../../lib/auth'
+import toast from 'react-hot-toast'
+
+// Utility functions for operation rendering
+const getOperationIcon = (type: string) => {
+  switch(type) {
+    case 'code': return <CodeBracketIcon className="w-4 h-4" />
+    case 'chart': return <ChartBarIcon className="w-4 h-4" />
+    case 'analysis': return <CpuChipIcon className="w-4 h-4" />
+    default: return <SparklesIcon className="w-4 h-4" />
+  }
+}
+
+const getOperationStatusIcon = (status: string) => {
+  switch(status) {
+    case 'completed': return <SolidCheckCircle className="w-4 h-4 text-green-500" />
+    case 'running': return <ClockIcon className="w-4 h-4 text-blue-500 animate-pulse" />
+    case 'error': return <XCircleIcon className="w-4 h-4 text-red-500" />
+    default: return null
+  }
+}
 
 interface Message {
   id: string
@@ -112,7 +133,7 @@ export default function AICoach() {
     if (!user) return
     
     try {
-      const token = localStorage.getItem('tq_session')
+      const token = getAuthToken()
       const response = await fetch('/api/v1/coach/conversations', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -136,7 +157,7 @@ export default function AICoach() {
   // Load conversation when session changes
   const loadConversation = async (newSessionId: string) => {
     try {
-      const token = localStorage.getItem('tq_session')
+      const token = getAuthToken()
       const response = await fetch(`/api/v1/coach/conversations/${newSessionId}/messages`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -160,7 +181,7 @@ export default function AICoach() {
     if (!confirm('Delete this conversation?')) return
     
     try {
-      const token = localStorage.getItem('tq_session')
+      const token = getAuthToken()
       const response = await fetch(`/api/v1/coach/session/${sessionIdToDelete}`, {
         method: 'DELETE',
         headers: {
@@ -207,36 +228,23 @@ export default function AICoach() {
     if (!input.trim() || loading) return
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}`,
       type: 'user',
       content: input.trim(),
       timestamp: new Date().toISOString()
     }
 
+    const assistantId = `assistant-${Date.now()}`
+
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setLoading(true)
-    setCurrentOperations([]) // Clear previous operations
-    setAnalysisPhase('Initializing analysis...')
-    
-    // Create placeholder assistant message immediately
-    const assistantId = (Date.now() + 1).toString()
+    setCurrentOperations([])
+    setAnalysisPhase('')
     setActiveMessageId(assistantId)
-    setExpandedThinking(assistantId) // Auto-expand
-    
-    const placeholderMessage: Message = {
-      id: assistantId,
-      type: 'assistant',
-      content: '🔄 Analyzing your request...',
-      timestamp: new Date().toISOString(),
-      thinking: {
-        operations: []
-      }
-    }
-    setMessages(prev => [...prev, placeholderMessage])
 
     try {
-      const token = localStorage.getItem('tq_session')
+      const token = getAuthToken()
       
       // Use EventSource for SSE streaming
       const url = new URL('/api/v1/coach/chat/stream', window.location.origin)
@@ -264,46 +272,54 @@ export default function AICoach() {
       
       const decoder = new TextDecoder()
       let buffer = ''
-      let finalMessage = ''
       let operations: any[] = []
-
-      console.log('Starting stream read...')
 
       while (true) {
         const { done, value } = await reader.read()
         
-        if (done) {
-          console.log('Stream done - reader finished')
-          setLoading(false)
-          setCurrentOperations([])
-          setAnalysisPhase('')
-          break
+        // Process chunk BEFORE checking done
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true })
+          buffer += chunk
         }
         
-        const chunk = decoder.decode(value, { stream: true })
-        console.log('Received chunk:', chunk)
-        buffer += chunk
-        const lines = buffer.split('\n\n')
-        buffer = lines.pop() || ''
+        // Process all complete lines in buffer
+        // Backend sends LITERAL \n characters (backslash-n), not actual newlines!
+        // So we need to split by the literal string "\\n\\n"
+        let lines = buffer.split('\\n\\n')
+        
+        // If stream is done, process all remaining lines including the last one
+        // Otherwise, keep the last (potentially incomplete) line in buffer
+        if (!done) {
+          buffer = lines.pop() || ''
+        } else {
+          buffer = ''
+        }
         
         for (const line of lines) {
           if (!line.trim()) continue
           
-          console.log('Processing line:', line)
-          
           if (!line.startsWith('data: ')) {
-            console.warn('Line does not start with data:', line)
             continue
           }
           
           try {
-            const data = JSON.parse(line.substring(6))
-            console.log('Parsed data:', data)
+            // Remove "data: " prefix
+            let jsonStr = line.substring(6)
+            
+            // The backend sends escaped JSON (with \" and \\n), so we need to unescape it
+            let data
+            try {
+              // Try parsing as-is first (in case it's properly formatted)
+              data = JSON.parse(jsonStr)
+            } catch (firstError) {
+              // If that fails, the string is double-escaped, so unescape by wrapping in quotes and parsing
+              const unescapedStr = JSON.parse(`"${jsonStr}"`)
+              data = JSON.parse(unescapedStr)
+            }
             
             if (data.type === 'operation') {
               // Update live operations
-              console.log('Operation update:', data.data)
-              
               // Check if this operation already exists (update it) or is new (push it)
               const existingIndex = operations.findIndex(op => op.name === data.data.name && op.type === data.data.type)
               
@@ -315,39 +331,39 @@ export default function AICoach() {
                 operations.push(data.data)
               }
               
-              // Update the placeholder message in real-time
-              setMessages(prev => prev.map(msg => 
-                msg.id === assistantId 
-                  ? { ...msg, thinking: { operations: [...operations] } }
-                  : msg
-              ))
+              // Store operations for live loading indicator
+              setCurrentOperations([...operations])
               
               // Update analysis phase
               if (data.data.status === 'running') {
                 setAnalysisPhase(data.data.name)
-              } else if (data.data.status === 'completed') {
-                // Clear phase when completed
-                setAnalysisPhase('')
               }
             } else if (data.type === 'final_message') {
-              finalMessage = data.data.message
+              const finalMessage = data.data.message
               setSessionId(data.data.session_id)
               
-              // Update placeholder with final content
-              setMessages(prev => prev.map(msg =>
-                msg.id === assistantId
-                  ? { ...msg, content: finalMessage }
-                  : msg
-              ))
-            } else if (data.type === 'done') {
-              // Stream complete - cleanup
-              console.log('Stream complete with', operations.length, 'operations')
+              // Add complete assistant message as NEW entry (not updating placeholder)
+              const completeMessage: Message = {
+                id: assistantId,
+                type: 'assistant',
+                content: finalMessage,
+                timestamp: new Date().toISOString(),
+                thinking: operations.length > 0 ? { operations: [...operations] } : undefined
+              }
               
+              setMessages(prev => [...prev, completeMessage])
+              
+              // Clear loading states
               setLoading(false)
               setCurrentOperations([])
               setAnalysisPhase('')
               setActiveMessageId(null)
               
+              // Scroll to bottom
+              setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+              }, 100)
+            } else if (data.type === 'done') {
               // Refresh conversations list
               fetchConversations()
             } else if (data.type === 'error') {
@@ -357,26 +373,20 @@ export default function AICoach() {
             console.error('Failed to parse SSE message:', e)
           }
         }
+        
+        // Check if stream is done AFTER processing all lines
+        if (done) {
+          break
+        }
       }
     } catch (error) {
       console.error('Failed to send message:', error)
-      
-      // Update placeholder message with error
-      setMessages(prev => prev.map(msg =>
-        msg.id === assistantId
-          ? { ...msg, content: 'Failed to process your message. Please try again.' }
-          : msg
-      ))
+      toast.error('Failed to process your message. Please try again.')
       
       setLoading(false)
       setCurrentOperations([])
       setAnalysisPhase('')
       setActiveMessageId(null)
-    } finally {
-      // Always cleanup loading state
-      setLoading(false)
-      setCurrentOperations([])
-      setAnalysisPhase('')
     }
   }
 
@@ -397,7 +407,7 @@ export default function AICoach() {
     setLoading(true)
 
     try {
-      const token = localStorage.getItem('tq_session')
+      const token = getAuthToken()
       const response = await fetch('/api/v1/coach/chat', {
         method: 'POST',
         headers: {
@@ -470,17 +480,17 @@ export default function AICoach() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="h-screen bg-background flex overflow-hidden">
       <Sidebar className="w-64 fixed left-0 top-0 bottom-0" />
       
-      <div className="flex-1 flex flex-col ml-64">
+      <div className="flex-1 flex flex-col ml-64 h-screen">
         <Header />
         
         <main className="flex-1 flex gap-6 p-6 overflow-hidden">
           {/* Left: Conversations & System Status */}
-          <div className="w-80 flex flex-col gap-4 overflow-hidden">
+          <div className="w-80 flex flex-col gap-4 h-full overflow-hidden">
             {/* Conversations List */}
-            <Card className="border-border/50 flex-1 flex flex-col min-h-0">
+            <Card className="border-border/50 flex-1 flex flex-col overflow-hidden">
               <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
                 <h3 className="font-bold text-foreground">Conversations</h3>
                 <Button
@@ -508,7 +518,7 @@ export default function AICoach() {
                 </Button>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              <div className="flex-1 overflow-y-auto p-2 space-y-1 brand-scrollbar">
                 {conversations.map((conv) => (
                   <div
                     key={conv.session_id}
@@ -633,7 +643,7 @@ export default function AICoach() {
           </div>
 
           {/* Right: Chat Interface */}
-          <div className="flex-1 flex flex-col bg-card border border-border rounded-lg overflow-hidden">
+          <div className="flex-1 flex flex-col bg-card border border-border rounded-lg overflow-hidden h-full">
             {/* Header */}
             <div className="border-b border-border bg-gradient-to-r from-brand-dark-teal/10 to-brand-bright-yellow/10 px-6 py-4">
               <div className="flex items-center justify-between">
@@ -670,7 +680,7 @@ export default function AICoach() {
 
             {/* Messages */}
             {user && (
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-background/50 to-background">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-background/50 to-background brand-scrollbar">
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -879,6 +889,36 @@ export default function AICoach() {
                   </div>
                 </div>
               ))}
+              
+              {/* Live Loading Indicator */}
+              {loading && currentOperations.length > 0 && (
+                <div className="flex justify-start">
+                  <div className="max-w-3xl">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-gradient-to-br from-brand-dark-teal to-brand-bright-yellow rounded-full brand-glow flex-shrink-0 animate-pulse">
+                        <SparklesIcon className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="p-4 rounded-lg bg-card border border-border/50">
+                          <div className="text-sm font-medium text-foreground mb-3">
+                            🔄 {analysisPhase || 'Processing...'}
+                          </div>
+                          <div className="space-y-2">
+                            {currentOperations.map((op, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                                {getOperationIcon(op.type)}
+                                <span className="font-medium">{op.name}</span>
+                                <span className="flex-1">{op.details || op.status}</span>
+                                {getOperationStatusIcon(op.status)}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div ref={messagesEndRef} />
             </div>

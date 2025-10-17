@@ -11,6 +11,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 import secrets
 import string
+import structlog
+
+logger = structlog.get_logger()
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -26,11 +29,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
+        logger.info("Using provided expires_delta", expires_delta=str(expires_delta), expire=str(expire))
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
+        logger.info("Using default JWT_EXPIRE_MINUTES", minutes=settings.JWT_EXPIRE_MINUTES, expire=str(expire))
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+    logger.info("JWT token created", expire=str(expire), token_length=len(encoded_jwt))
     return encoded_jwt
 
 def verify_token(token: str) -> Optional[str]:

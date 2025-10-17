@@ -58,7 +58,7 @@ export default function IntegrationsPage() {
 
   const fetchConnections = async () => {
     try {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
       const response = await fetch('/api/v1/broker/connections', {
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -111,7 +111,7 @@ export default function IntegrationsPage() {
 
     setIsConnecting(true)
     try {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
       const response = await fetch(`/api/broker/connect/${selectedBroker}`, {
         method: 'POST',
         headers: {
@@ -143,7 +143,7 @@ export default function IntegrationsPage() {
     }
 
     try {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
       const response = await fetch(`/api/broker/connections/${connectionId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
@@ -162,7 +162,7 @@ export default function IntegrationsPage() {
 
   const handleSync = async (connectionId: string) => {
     try {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
       const response = await fetch(`/api/broker/sync/${connectionId}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },

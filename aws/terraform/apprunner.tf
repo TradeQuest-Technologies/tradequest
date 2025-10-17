@@ -34,7 +34,7 @@ resource "aws_apprunner_service" "frontend" {
         
         runtime_environment_variables = {
           NODE_ENV            = "production"
-          NEXT_PUBLIC_API_URL = var.domain_name != "" ? "https://${var.domain_name}" : "http://localhost:8000"
+          NEXT_PUBLIC_API_URL = var.domain_name != "" ? "https://api.${var.domain_name}" : "http://localhost:8000"
           PORT                = "3000"
           HOSTNAME            = "0.0.0.0"
         }

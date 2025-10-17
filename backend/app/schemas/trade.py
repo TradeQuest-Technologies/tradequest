@@ -12,7 +12,7 @@ import math
 class TradeBase(BaseModel):
     account: Optional[str] = None
     venue: str
-    symbol: str
+    symbol: Optional[str] = None  # Made optional to handle legacy data
     side: str
     qty: Decimal
     avg_price: Decimal
@@ -79,16 +79,3 @@ class JournalEntryResponse(JournalEntryBase):
     class Config:
         from_attributes = True
 
-class ApiKeyCreate(BaseModel):
-    venue: str
-    api_key: str
-    api_secret: str
-    meta: Optional[Dict[str, Any]] = None
-
-class ApiKeyResponse(BaseModel):
-    id: str
-    venue: str
-    created_at: datetime
-    
-    class Config:
-        from_attributes = True

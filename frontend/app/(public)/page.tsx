@@ -10,6 +10,8 @@ import {
   ShieldCheckIcon,
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
+import PublicHeader from "@/components/layout/PublicHeader";
+import PublicFooter from "@/components/layout/PublicFooter";
 
 export default function PublicLandingPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,12 +33,6 @@ export default function PublicLandingPage() {
     window.location.href = isValid ? '/dashboard' : '/auth';
   };
 
-  const handleSignIn = () => {
-    const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session');
-    const expiresAt = localStorage.getItem('tq_expires_at') || sessionStorage.getItem('tq_expires_at');
-    const isValid = token && (!expiresAt || Date.now() <= parseInt(expiresAt));
-    window.location.href = isValid ? '/dashboard' : '/auth';
-  };
 
 
   const coreFeatures = [
@@ -54,59 +50,12 @@ export default function PublicLandingPage() {
       icon: DocumentTextIcon,
       title: "Trade Journal", 
       description: "Detailed journaling with screenshots, notes, tags, and session tracking to learn from every trade." 
-    },
-    { 
-      icon: ShieldCheckIcon,
-      title: "Risk Management", 
-      description: "Set daily limits, stop-loss alerts, and trading rules to protect your capital and maintain discipline." 
-    },
+    }
   ];
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Navigation */}
-      <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Link href="/">
-                  <img
-                    src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
-                    alt="TradeQuest"
-                    className="h-10 w-auto"
-                  />
-                </Link>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/features" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Features
-                </Link>
-                <Link href="/pricing" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Pricing
-                </Link>
-                <Link href="/contact" className="text-gray-300 hover:text-brand-bright-yellow px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Contact
-                </Link>
-                <button
-                  onClick={handleSignIn}
-                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={handleGetStarted}
-                  className="bg-brand-bright-yellow text-gray-900 hover:bg-brand-bright-yellow/90 px-6 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg hover:shadow-xl"
-                >
-                  Get Started
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <PublicHeader currentPage="home" />
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-gray-900 via-brand-dark-teal/20 to-gray-900 py-32 overflow-hidden">
@@ -168,7 +117,7 @@ export default function PublicLandingPage() {
               Everything you need to analyze, improve, and master your trading performance
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {coreFeatures.map((feature, index) => (
               <motion.div
                 key={feature.title}
@@ -260,49 +209,7 @@ export default function PublicLandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-black border-t border-gray-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
-            <div>
-              <img
-                src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
-                alt="TradeQuest"
-                className="h-10 w-auto mb-4"
-              />
-              <p className="text-gray-400 leading-relaxed">
-                The trading platform that focuses on education, discipline, and continuous improvement.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Product</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li><Link href="/features" className="hover:text-brand-bright-yellow transition-colors">Features</Link></li>
-                <li><Link href="/pricing" className="hover:text-brand-bright-yellow transition-colors">Pricing</Link></li>
-                <li><Link href="/docs" className="hover:text-brand-bright-yellow transition-colors">Documentation</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Company</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li><Link href="/contact" className="hover:text-brand-bright-yellow transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Legal</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li><Link href="/terms" className="hover:text-brand-bright-yellow transition-colors">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="hover:text-brand-bright-yellow transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/risk-disclaimer" className="hover:text-brand-bright-yellow transition-colors">Risk Disclaimer</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 pt-8 text-center">
-            <p className="text-gray-500">&copy; 2025 TradeQuest. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
-
+      <PublicFooter />
     </div>
   );
 }

@@ -34,7 +34,7 @@ class OHLCVService:
         # CCXT as backup for crypto when Binance Vision fails
         self.exchanges = {
             'binance': ccxt.binance(),
-            'coinbase': ccxt.coinbasepro(),
+            'coinbase': ccxt.coinbase(),
             'kraken': ccxt.kraken()
         }
     

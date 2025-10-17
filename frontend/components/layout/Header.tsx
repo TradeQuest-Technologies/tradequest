@@ -79,13 +79,15 @@ export function Header({ className }: HeaderProps) {
           {/* User Menu */}
           <div className="flex items-center space-x-2">
             <img 
-              src="/images/logos/Transparent/TradeQuest [Icon Only] [Colored] [Square].png" 
+              src="/images/logos/Transparent/TradeQuest%20%5BIcon%20Only%5D%20%5BColored%5D%20%5BSquare%5D.png" 
               alt="TradeQuest Logo" 
               className="w-8 h-8 rounded-full"
             />
             <div className="text-sm">
               <div className="font-medium text-foreground font-brand">{user?.first_name || user?.alias || user?.email?.split('@')[0] || 'Trader'}</div>
-              <div className="text-muted-foreground capitalize">{user?.plan || 'Free'} Plan</div>
+              <div className="text-muted-foreground capitalize">
+                {user?.plan === 'plus_monthly' || user?.plan === 'plus_yearly' ? 'Plus' : user?.plan || 'Free'} Plan
+              </div>
             </div>
           </div>
         </div>

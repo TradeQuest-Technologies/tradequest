@@ -57,8 +57,10 @@ class StorageService:
     
     def _init_local_storage(self):
         """Initialize local storage directories"""
-        self.upload_dir = Path(settings.UPLOAD_DIR)
-        self.coach_dir = Path("data/coach_workspaces")
+        # Use absolute paths to avoid relative path issues
+        base_dir = Path(__file__).parent.parent.parent  # backend directory
+        self.upload_dir = base_dir / settings.UPLOAD_DIR
+        self.coach_dir = base_dir / "data" / "coach_workspaces"
         
         # Create directories if they don't exist
         self.upload_dir.mkdir(parents=True, exist_ok=True)
@@ -131,7 +133,8 @@ class StorageService:
                 f.write(file_obj.read())
             
             logger.info(f"File uploaded locally: {full_path}")
-            return str(full_path.relative_to(Path.cwd()))
+            # Return the relative path from upload_dir for consistency
+            return file_path
             
         except Exception as e:
             logger.error(f"Failed to upload file locally: {e}")
@@ -280,7 +283,7 @@ class StorageService:
             session_id: Session ID
             
         Returns:
-            Path to the workspace
+            Path to the workspace (absolute path for local, relative for S3)
         """
         workspace_path = f"coach_workspaces/{user_id}/{session_id}"
         
@@ -288,10 +291,10 @@ class StorageService:
             # For S3, just return the path (no need to create directory)
             return workspace_path
         else:
-            # For local storage, create the directory
+            # For local storage, create the directory and return absolute path
             full_path = self.coach_dir / user_id / session_id
             full_path.mkdir(parents=True, exist_ok=True)
-            return str(full_path.relative_to(Path.cwd()))
+            return str(full_path.absolute())
 
 
 # Global storage service instance

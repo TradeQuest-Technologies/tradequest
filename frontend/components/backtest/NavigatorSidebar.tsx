@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '../ui/Button'
+import { getAuthToken } from '../../lib/auth'
 import {
   FolderIcon,
   PlusIcon,
@@ -101,8 +102,8 @@ export default function NavigatorSidebar({ currentGraph, onGraphSelect, onClose 
 
   const fetchGraphs = async () => {
     try {
-      const token = localStorage.getItem('tq_session')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/backtest/v2/graphs`, {
+      const token = getAuthToken()
+      const response = await fetch(`${''}/api/v1/backtest/v2/graphs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (response.ok) {
@@ -116,8 +117,8 @@ export default function NavigatorSidebar({ currentGraph, onGraphSelect, onClose 
 
   const fetchRuns = async () => {
     try {
-      const token = localStorage.getItem('tq_session')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/backtest/v2/runs?limit=10`, {
+      const token = getAuthToken()
+      const response = await fetch(`${''}/api/v1/backtest/v2/runs?limit=10`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (response.ok) {
@@ -137,8 +138,8 @@ export default function NavigatorSidebar({ currentGraph, onGraphSelect, onClose 
     }
 
     try {
-      const token = localStorage.getItem('tq_session')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/backtest/v2/graphs/${graphId}`, {
+      const token = getAuthToken()
+      const response = await fetch(`${''}/api/v1/backtest/v2/graphs/${graphId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -165,8 +166,8 @@ export default function NavigatorSidebar({ currentGraph, onGraphSelect, onClose 
     }
 
     try {
-      const token = localStorage.getItem('tq_session')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/backtest/v2/graphs`, {
+      const token = getAuthToken()
+      const response = await fetch(`${''}/api/v1/backtest/v2/graphs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -59,7 +59,7 @@ export default function ChatPage() {
     setIsLoading(true)
 
     try {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
       if (!token) {
         router.push('/auth')
         return

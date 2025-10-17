@@ -60,7 +60,7 @@ class BacktestRun(Base):
     data_sha = Column(String)  # Hash of OHLCV data used
     params_sha = Column(String)  # Hash of all parameters
     code_sha = Column(String)  # Hash of custom code (if any)
-    repro_id = Column(String, unique=True, index=True)  # Combined hash for exact reproduction
+    repro_id = Column(String, index=True)  # Combined hash for exact reproduction (not unique - can run same backtest multiple times)
     
     # Execution status
     status = Column(String, default="queued")  # queued, preparing, running, aggregating, completed, failed, canceled

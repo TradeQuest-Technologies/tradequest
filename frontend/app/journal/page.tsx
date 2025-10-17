@@ -7,9 +7,11 @@ import { Header } from '../../components/layout/Header'
 import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
+import UpgradeModal from '../../components/modals/UpgradeModal'
 import { 
   PlusIcon, 
   ArrowUpTrayIcon, 
+  ArrowDownTrayIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
   EyeIcon,
@@ -17,6 +19,7 @@ import {
   TrashIcon
 } from '@heroicons/react/24/outline'
 import { formatCurrency, formatDateTime, getColorForValue } from '../../lib/utils'
+import toast from 'react-hot-toast'
 
 interface Trade {
   id: string
@@ -41,6 +44,10 @@ export default function TradingJournal() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSymbol, setFilterSymbol] = useState<string>('all')
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [upgradeFeature, setUpgradeFeature] = useState('')
+  const [userPlan, setUserPlan] = useState<string>('free')
+  const [showExportMenu, setShowExportMenu] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -73,8 +80,66 @@ export default function TradingJournal() {
       }
     }
 
+    const fetchUserPlan = async () => {
+      try {
+        const response = await fetch('/api/v1/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setUserPlan(data.plan || 'free')
+        }
+      } catch (error) {
+        console.error('Failed to fetch user plan:', error)
+      }
+    }
+
     fetchTrades()
+    fetchUserPlan()
   }, [router])
+
+  const handleExport = async (format: 'csv' | 'json' | 'excel') => {
+    // Check plan access for advanced formats
+    if ((format === 'json' || format === 'excel') && (userPlan === 'free' || !userPlan)) {
+      router.push(`/upgrade?feature=${format.toUpperCase()} Export`)
+      return
+    }
+
+    const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.tradequest.tech'}/api/v1/journal/export?format=${format}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        toast.error(error.detail || 'Export failed')
+        return
+      }
+
+      // Download the file
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `tradequest_trades_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : format}`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast.success(`Trades exported as ${format.toUpperCase()}`)
+      setShowExportMenu(false)
+    } catch (error) {
+      console.error('Export failed:', error)
+      toast.error('Failed to export trades')
+    }
+  }
 
   const filteredTrades = trades.filter(trade => {
     const matchesSearch = trade.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -159,6 +224,39 @@ export default function TradingJournal() {
               </p>
             </div>
             <div className="flex space-x-3">
+              <div className="relative">
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+                {showExportMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
+                    <button
+                      onClick={() => handleExport('csv')}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
+                    >
+                      CSV Format
+                    </button>
+                    <button
+                      onClick={() => handleExport('json')}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+                    >
+                      JSON Format
+                      {userPlan === 'free' && <span className="text-xs text-yellow-600">Plus</span>}
+                    </button>
+                    <button
+                      onClick={() => handleExport('excel')}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg flex items-center justify-between"
+                    >
+                      Excel Format
+                      {userPlan === 'free' && <span className="text-xs text-yellow-600">Plus</span>}
+                    </button>
+                  </div>
+                )}
+              </div>
               <Button 
                 variant="outline"
                 onClick={() => router.push('/journal/import')}
@@ -172,6 +270,35 @@ export default function TradingJournal() {
               </Button>
             </div>
           </div>
+
+          {/* History Retention Warning for Free Users */}
+          {userPlan === 'free' && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3 flex-1">
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Limited History Access
+                  </h3>
+                  <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                    You're viewing the last 3 months of trades. Upgrade to Plus for unlimited trade history forever.
+                  </p>
+                  <div className="mt-2">
+                    <button
+                      onClick={() => router.push('/upgrade?feature=Unlimited Trade History')}
+                      className="text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100 underline"
+                    >
+                      Upgrade Now →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Filters */}
           <Card>
@@ -308,6 +435,14 @@ export default function TradingJournal() {
           </Card>
         </main>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature={upgradeFeature}
+        currentPlan={userPlan}
+      />
     </div>
   )
 }

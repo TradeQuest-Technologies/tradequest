@@ -51,12 +51,12 @@ export function Sidebar({ className }: SidebarProps) {
         <div className="flex items-center space-x-2">
           {/* Use rectangle wordmark; swap by theme */}
           <img
-            src="/images/logos/Transparent/TradeQuest [Colored] [Rectangle].png"
+            src="/images/logos/Transparent/TradeQuest%20%5BColored%5D%20%5BRectangle%5D.png"
             alt="TradeQuest"
             className="block dark:hidden h-12 w-auto"
           />
           <img
-            src="/images/logos/Transparent/TradeQuest [White] [Rectangle].png"
+            src="/images/logos/Transparent/TradeQuest%20%5BWhite%5D%20%5BRectangle%5D.png"
             alt="TradeQuest"
             className="hidden dark:block h-12 w-auto"
           />
@@ -113,7 +113,7 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="p-4 border-t">
         <div className="flex items-center space-x-3 mb-4">
           <img 
-            src="/images/logos/Transparent/TradeQuest [Icon Only] [Colored] [Square].png" 
+            src="/images/logos/Transparent/TradeQuest%20%5BIcon%20Only%5D%20%5BColored%5D%20%5BSquare%5D.png" 
             alt="TradeQuest Logo" 
             className="w-8 h-8 rounded-full"
           />

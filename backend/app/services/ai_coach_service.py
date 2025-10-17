@@ -1038,12 +1038,16 @@ fetch_aggtrades_data(symbol='DOGE_USDT/USDT', start_time='2024-09-01T00:00:00', 
             # Stream: Final message (clean up any bad image paths in the message text)
             import re
             cleaned_message = final_message
-            # Fix markdown image paths: ![alt](sandbox:/path/to/file.png) -> ![alt](filename.png)
+            # Fix markdown image paths: Extract ONLY the filename from ANY path format
+            # Step 1: Strip sandbox: prefix explicitly
+            cleaned_message = re.sub(r'sandbox:', '', cleaned_message)
+            # Step 2: Extract just the filename from any remaining path
             cleaned_message = re.sub(
-                r'!\[([^\]]*)\]\((?:sandbox:|/mnt/data/|/api/v1/coach/image/[^/]+/[^/]+/)*([^/)]+\.(?:png|jpg|jpeg|gif|svg))\)',
+                r'!\[([^\]]*)\]\((?:.*/)?([^/]+\.(?:png|jpg|jpeg|gif|svg))\)',
                 r'![\1](\2)',
                 cleaned_message
             )
+            logger.info(f"Cleaned message: {cleaned_message[:200]}...")
             
             yield self._format_sse({
                 "type": "final_message",
@@ -1129,7 +1133,7 @@ fetch_aggtrades_data(symbol='DOGE_USDT/USDT', start_time='2024-09-01T00:00:00', 
         for trade in trades:
             trades_data.append({
                 "id": trade.id,
-                "symbol": trade.symbol,
+                "symbol": trade.symbol or "UNKNOWN",  # Handle legacy trades
                 "side": trade.side,
                 "qty": float(trade.qty) if trade.qty else 0,
                 "avg_price": float(trade.avg_price) if trade.avg_price else 0,
@@ -1358,7 +1362,7 @@ All trades pre-loaded as 'trades_data' in Python environment. Focus on actionabl
         for trade in trades:
             trades_data.append({
                 "id": trade.id,
-                "symbol": trade.symbol,
+                "symbol": trade.symbol or "UNKNOWN",  # Handle legacy trades
                 "side": trade.side,
                 "qty": float(trade.qty) if trade.qty else 0,
                 "avg_price": float(trade.avg_price) if trade.avg_price else 0,
@@ -1510,6 +1514,7 @@ All trades pre-loaded as 'trades_data' in Python environment. Focus on actionabl
                 
                 # Clean up bad paths (AI sometimes returns wrong paths)
                 from pathlib import Path
+                import time
                 # If it contains "sandbox:", "/mnt/", "/api/v1/", or other path indicators, extract just filename
                 if any(x in image_filename for x in ["sandbox:", "/mnt/", "/api/v1/", "http://", "https://"]):
                     # Extract just the filename from any complex path
@@ -1520,6 +1525,23 @@ All trades pre-loaded as 'trades_data' in Python environment. Focus on actionabl
                 # If it's just a filename, prepend workspace path
                 if not image_filename.startswith("/") and ":" not in image_filename:
                     image_path = self.workspace_dir / image_filename
+                    
+                    # Wait for file to be written (matplotlib might be buffering)
+                    max_wait = 3  # seconds
+                    waited = 0
+                    while not image_path.exists() and waited < max_wait:
+                        await asyncio.sleep(0.1)
+                        waited += 0.1
+                    
+                    if image_path.exists():
+                        logger.info(f"Image file verified: {image_path}")
+                    else:
+                        logger.error(f"Image file not found after {max_wait}s: {image_path}")
+                        # List files in directory
+                        if self.workspace_dir.exists():
+                            files = list(self.workspace_dir.glob("*"))
+                            logger.error(f"Files in workspace: {[f.name for f in files]}")
+                    
                     # Create URL path that frontend can access (includes user_id for path-based security)
                     result["result"]["image_url"] = f"/api/v1/coach/image/{self.user_id}/{self.session_id}/{image_filename}"
                     result["result"]["image_path"] = str(image_path)
@@ -1601,7 +1623,7 @@ All trades pre-loaded as 'trades_data' in Python environment. Focus on actionabl
         for trade in trades:
             trades_data.append({
                 "id": trade.id,
-                "symbol": trade.symbol,
+                "symbol": trade.symbol or "UNKNOWN",  # Handle legacy trades
                 "side": trade.side,
                 "qty": float(trade.qty) if trade.qty else 0,
                 "avg_price": float(trade.avg_price) if trade.avg_price else 0,

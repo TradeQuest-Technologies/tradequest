@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sidebar } from '../../../components/layout/Sidebar'
 import { Header } from '../../../components/layout/Header'
@@ -8,6 +8,7 @@ import { Button } from '../../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card'
 import { Badge } from '../../../components/ui/Badge'
 import { VenueSelector } from '../../../components/VenueSelector'
+import UpgradeModal from '../../../components/modals/UpgradeModal'
 import { 
   ArrowLeftIcon, 
   ArrowUpTrayIcon, 
@@ -48,8 +49,50 @@ export default function ImportTrades() {
   const [editingTrade, setEditingTrade] = useState<ImportedTrade | null>(null)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const chartImageInputRef = useRef<HTMLInputElement>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [userPlan, setUserPlan] = useState<string>('free')
+
+  // Check user plan on component mount
+  useEffect(() => {
+    const checkUserPlan = async () => {
+      const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')
+      if (!token) {
+        router.push('/auth')
+        return
+      }
+
+      try {
+        const response = await fetch('/api/v1/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          const plan = data.plan || 'free'
+          setUserPlan(plan)
+          
+          // If free user, redirect to upgrade page immediately
+          if (plan === 'free' || !plan) {
+            router.push('/upgrade?feature=CSV Import')
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user plan:', error)
+      }
+    }
+
+    checkUserPlan()
+  }, [router])
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Check if user has CSV import access
+    if (userPlan === 'free') {
+      router.push('/upgrade?feature=CSV Import')
+      return
+    }
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -649,6 +692,14 @@ export default function ImportTrades() {
           </div>
         </main>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="CSV Import"
+        currentPlan={userPlan}
+      />
     </div>
   )
 }

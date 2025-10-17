@@ -16,7 +16,7 @@ class MarketDataService:
     def __init__(self):
         self.exchanges = {
             'kraken': ccxt.kraken(),
-            'coinbase': ccxt.coinbasepro(),
+            'coinbase': ccxt.coinbase(),
             'binance': ccxt.binance(),  # For additional data sources
         }
     

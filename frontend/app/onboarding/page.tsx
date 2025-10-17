@@ -147,7 +147,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     // Check if user is authenticated
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session');
     if (!token) {
       router.push('/auth');
       return;
@@ -187,7 +187,7 @@ export default function OnboardingPage() {
         const response = await fetch('/api/v1/2fa/setup/totp', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')}`,
             'Content-Type': 'application/json'
           }
         });
@@ -212,7 +212,7 @@ export default function OnboardingPage() {
         const response = await fetch('/api/v1/2fa/setup/sms', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('tq_session') || sessionStorage.getItem('tq_session')}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ phone_number: data.phone_number })
@@ -418,7 +418,7 @@ export default function OnboardingPage() {
       } else {
         // Complete onboarding
         toast.success('Onboarding completed! Welcome to TradeQuest!');
-        router.push('/dashboard');
+        router.push('/upgrade?from=onboarding');
       }
       
     } catch (error) {
@@ -436,7 +436,7 @@ export default function OnboardingPage() {
   };
 
   const handleSkip = () => {
-    router.push('/dashboard');
+    router.push('/upgrade?from=onboarding');
   };
 
   const renderStepContent = () => {
@@ -558,7 +558,7 @@ export default function OnboardingPage() {
                     value={data.first_name || ''}
                     onChange={(e) => setData({...data, first_name: e.target.value})}
                     placeholder="First"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal text-gray-900"
                   />
                 </div>
                 <div>
@@ -568,7 +568,7 @@ export default function OnboardingPage() {
                     value={data.last_name || ''}
                     onChange={(e) => setData({...data, last_name: e.target.value})}
                     placeholder="Last"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal text-gray-900"
                   />
                 </div>
                 <div>
@@ -577,7 +577,7 @@ export default function OnboardingPage() {
                     type="date"
                     value={data.birth_date || ''}
                     onChange={(e) => setData({...data, birth_date: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal text-gray-900"
                   />
                 </div>
               </div>
@@ -590,7 +590,7 @@ export default function OnboardingPage() {
                   value={data.alias}
                   onChange={(e) => setData({...data, alias: e.target.value})}
                   placeholder="Enter your display name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal text-gray-900"
                 />
               </div>
               
@@ -601,7 +601,7 @@ export default function OnboardingPage() {
                 <select
                   value={data.display_currency}
                   onChange={(e) => setData({...data, display_currency: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal text-gray-900"
                 >
                   <option value="USD">USD</option>
                   <option value="EUR">EUR</option>
@@ -669,7 +669,7 @@ export default function OnboardingPage() {
                   onChange={(e) => setData({...data, set_password: e.target.value})}
                   placeholder="Enter a strong password (min 10 characters)"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal text-gray-900"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Minimum 10 characters. Required for account security.
@@ -686,7 +686,7 @@ export default function OnboardingPage() {
                   onChange={(e) => setData({...data, confirm_password: e.target.value})}
                   placeholder="Confirm your password"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal text-gray-900"
                 />
               </div>
               
@@ -700,7 +700,6 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-1 gap-3">
                   {[
                     { value: 'email', label: 'Email Verification', icon: '📧', description: 'Receive codes via email' },
-                    { value: 'sms', label: 'SMS Code', icon: '📱', description: 'Receive codes via text message' },
                     { value: 'totp', label: 'Authenticator App', icon: '🔑', description: 'Google Authenticator, Authy, etc.' }
                   ].map((method) => (
                     <label key={method.value} className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors ${
@@ -736,7 +735,7 @@ export default function OnboardingPage() {
                     value={data.phone_number}
                     onChange={(e) => setData({...data, phone_number: e.target.value})}
                     placeholder="+1 (555) 123-4567"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal text-gray-900"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Include country code (e.g., +1 for US, +44 for UK)
@@ -810,7 +809,7 @@ export default function OnboardingPage() {
                         onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                         placeholder="Enter 6-digit code"
                         maxLength={6}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal text-center text-lg tracking-widest"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal text-center text-lg tracking-widest text-gray-900"
                       />
                       <button
                         onClick={verifyTwoFactorCode}
@@ -869,7 +868,7 @@ export default function OnboardingPage() {
                       onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="Enter 6-digit code"
                       maxLength={6}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal text-gray-900"
                     />
                     <button
                       onClick={verifyTwoFactorCode}
@@ -903,7 +902,7 @@ export default function OnboardingPage() {
                       onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="Enter 6-digit code"
                       maxLength={6}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal text-center text-lg tracking-widest"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal text-center text-lg tracking-widest text-gray-900"
                     />
                     <button
                       onClick={verifyTwoFactorCode}
@@ -1095,7 +1094,7 @@ export default function OnboardingPage() {
                 <select
                   value={data.account_size_band}
                   onChange={(e) => setData({...data, account_size_band: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-brand-dark-teal text-gray-900"
                 >
                   <option value="">Select account size</option>
                   <option value="<500">Less than $500</option>
