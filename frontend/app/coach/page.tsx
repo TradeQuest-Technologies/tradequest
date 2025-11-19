@@ -3,9 +3,10 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Sidebar } from '../../components/layout/Sidebar'
 import { Header } from '../../components/layout/Header'
+import { MobileNav } from '../../components/layout/MobileNav'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
@@ -24,11 +25,18 @@ import {
   ChartPieIcon,
   BoltIcon,
   TrashIcon,
-  XCircleIcon
+  XCircleIcon,
+  SpeakerWaveIcon,
+  PaperClipIcon,
+  MicrophoneIcon,
+  DocumentIcon,
+  PauseIcon as StopIcon
 } from '@heroicons/react/24/outline'
 import { CheckCircleIcon as SolidCheckCircle } from '@heroicons/react/24/solid'
-import { formatDateTime } from '../../lib/utils'
+import { formatDateTime, cn } from '../../lib/utils'
 import { getAuthToken } from '../../lib/auth'
+import { HelpButton } from '../../components/onboarding/HelpButton'
+import { ContextualHelpTooltip } from '../../components/onboarding/ContextualHelpTooltip'
 import toast from 'react-hot-toast'
 
 // Utility functions for operation rendering
@@ -82,9 +90,32 @@ interface Conversation {
 }
 
 export default function AICoach() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  
+  // Check for pre-filled message from URL params
+  useEffect(() => {
+    const messageParam = searchParams?.get('message')
+    if (messageParam && !input) {
+      // Only set if input is empty (don't overwrite user's current input)
+      try {
+        // Try to decode, but handle malformed URIs gracefully
+        const decoded = decodeURIComponent(messageParam)
+        setInput(decoded)
+      } catch (e) {
+        // If decoding fails (malformed URI), use the param as-is
+        console.warn('Failed to decode message param, using as-is:', e)
+        setInput(messageParam)
+      }
+      // Clear the URL param after setting the message
+      const url = new URL(window.location.href)
+      url.searchParams.delete('message')
+      window.history.replaceState({}, '', url.pathname + url.search)
+    }
+  }, [searchParams])
   const [analysisPhase, setAnalysisPhase] = useState('')
   const [currentOperations, setCurrentOperations] = useState<any[]>([]) // Live streaming operations
   const [activeMessageId, setActiveMessageId] = useState<string | null>(null) // ID of message being streamed
@@ -98,8 +129,18 @@ export default function AICoach() {
     }
     return `session-${Date.now()}`
   })
+  
+  // Enhanced features
+  const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(true)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [coachMode, setCoachMode] = useState<'aggressive' | 'conservative' | 'balanced'>('balanced')
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const recognitionRef = useRef<any>(null)
+  const synthesisRef = useRef<SpeechSynthesis | null>(null)
   const { user } = useUser()
   
   // Save session ID to localStorage
@@ -109,13 +150,38 @@ export default function AICoach() {
     }
   }, [sessionId])
 
+  // Initialize voice features
+  useEffect(() => {
+    // Initialize speech recognition
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
+      recognitionRef.current = new SpeechRecognition()
+      recognitionRef.current.continuous = false
+      recognitionRef.current.interimResults = false
+      recognitionRef.current.lang = 'en-US'
+      
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript
+        setInput(transcript)
+        setIsListening(false)
+      }
+      
+      recognitionRef.current.onerror = () => {
+        setIsListening(false)
+      }
+    }
+
+    // Initialize speech synthesis
+    synthesisRef.current = window.speechSynthesis
+  }, [])
+
   // Initial welcome message
   useEffect(() => {
     setMessages([
       {
         id: '1',
         type: 'assistant',
-        content: "# TradeQuest AI Analytics Engine Initialized\n\n**System Status**: ✅ ONLINE | **Data Access**: FULL | **Compute**: READY\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nI am your quantitative trading analyst - powered by large-scale data infrastructure, powered by advanced AI and real-time data access.\n\n## What I Can Do:\n\n🔍 **Forensic Trade Analysis**\n- Deep dive into every trade with OHLCV data\n- Calculate technical indicators (RSI, MACD, Moving Averages)\n- Identify hidden patterns and behavioral inconsistencies\n\n📊 **Statistical Intelligence**\n- Execute Python code for advanced calculations\n- Run correlation analysis, regression tests\n- Find statistically significant patterns in your data\n\n💡 **Actionable Insights**\n- Provide evidence-based recommendations\n- Quantify expected improvements\n- Generate specific, implementable trading rules\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nI have direct access to your complete trading history, real-time market data, and Python execution environment. Every insight is backed by actual calculations on YOUR data.\n\n**What would you like to analyze?**",
+        content: "# 🎯 Enhanced AI Trading Coach\n\n**System Status**: ✅ ONLINE | **Voice**: 🎤 READY | **Multi-Modal**: 📎 ACTIVE\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nI'm your advanced AI trading coach with enhanced capabilities:\n\n## 🚀 Enhanced Features:\n\n🎤 **Voice Interaction**\n- Speak your questions naturally\n- Listen to responses with text-to-speech\n- Hands-free trading analysis\n\n📎 **Multi-Modal Input**\n- Upload chart screenshots for analysis\n- Share trade documents for review\n- Visual pattern recognition\n\n💡 **Smart Suggestions**\n- Context-aware question recommendations\n- Personalized coaching based on your data\n- Adaptive learning from your preferences\n\n🎯 **Coach Modes**\n- **Aggressive**: Direct, no-nonsense feedback\n- **Conservative**: Gentle, supportive guidance\n- **Balanced**: Professional, data-driven insights\n\n## 🔍 Core Capabilities:\n\n**Forensic Trade Analysis**\n- Deep dive into every trade with OHLCV data\n- Calculate technical indicators (RSI, MACD, Moving Averages)\n- Identify hidden patterns and behavioral inconsistencies\n\n**Statistical Intelligence**\n- Execute Python code for advanced calculations\n- Run correlation analysis, regression tests\n- Find statistically significant patterns in your data\n\n**Actionable Insights**\n- Provide evidence-based recommendations\n- Quantify expected improvements\n- Generate specific, implementable trading rules\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n**Try asking me something or use voice input!**",
         timestamp: new Date().toISOString(),
         suggestions: [
           "Run forensic analysis on my losses",
@@ -221,16 +287,108 @@ export default function AICoach() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Voice control functions
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      setIsListening(true)
+      recognitionRef.current.start()
+    }
+  }
+
+  const stopListening = () => {
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    }
+  }
+
+  const speakText = (text: string) => {
+    if (synthesisRef.current && voiceEnabled) {
+      // Stop any current speech
+      synthesisRef.current.cancel()
+      
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = 0.9
+      utterance.pitch = 1
+      utterance.volume = 0.8
+      
+      utterance.onstart = () => setIsSpeaking(true)
+      utterance.onend = () => setIsSpeaking(false)
+      
+      synthesisRef.current.speak(utterance)
+    }
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      console.log('File selected:', file.name)
+    }
+  }
+
   // Analysis phase is handled by the placeholder message now
   // No need for separate loading state
 
   const handleSendMessage = async () => {
-    if (!input.trim() || loading) return
+    if ((!input.trim() && !selectedFile) || loading) return
+
+    let messageContent = input.trim()
+    let fileUrl: string | null = null
+
+    // Upload file first if one is selected
+    if (selectedFile) {
+      try {
+        const token = getAuthToken()
+        const formData = new FormData()
+        formData.append('file', selectedFile)
+        if (sessionId) {
+          formData.append('session_id', sessionId)
+        }
+
+        const uploadResponse = await fetch('/api/v1/coach/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        })
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json()
+          throw new Error(errorData.detail || 'Failed to upload file')
+        }
+
+        const uploadData = await uploadResponse.json()
+        fileUrl = uploadData.url || uploadData.relative_path
+
+        // Build absolute URL if relative
+        if (fileUrl && !fileUrl.startsWith('http')) {
+          const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+          fileUrl = `${apiBase}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`
+        }
+
+        // Add image reference to message content
+        if (selectedFile.type.startsWith('image/')) {
+          messageContent = messageContent 
+            ? `${messageContent}\n\n![${selectedFile.name}](${fileUrl})`
+            : `![${selectedFile.name}](${fileUrl})`
+        } else {
+          messageContent = messageContent
+            ? `${messageContent}\n\n[Attachment: ${selectedFile.name}](${fileUrl})`
+            : `[Attachment: ${selectedFile.name}](${fileUrl})`
+        }
+      } catch (error) {
+        console.error('File upload error:', error)
+        toast.error(error instanceof Error ? error.message : 'Failed to upload file')
+        return
+      }
+    }
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       type: 'user',
-      content: input.trim(),
+      content: messageContent,
       timestamp: new Date().toISOString()
     }
 
@@ -238,6 +396,10 @@ export default function AICoach() {
 
     setMessages(prev => [...prev, userMessage])
     setInput('')
+    setSelectedFile(null) // Clear selected file after sending
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '' // Reset file input
+    }
     setLoading(true)
     setCurrentOperations([])
     setAnalysisPhase('')
@@ -479,43 +641,52 @@ export default function AICoach() {
     }
   }
 
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
-      <Sidebar className="w-64 fixed left-0 top-0 bottom-0" />
+    <div className="min-h-screen bg-background flex mobile-nav-padding">
+      <Sidebar 
+        className="w-64 flex-shrink-0 z-30" 
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={() => setIsMobileSidebarOpen(false)}
+      />
       
-      <div className="flex-1 flex flex-col ml-64 h-screen">
-        <Header />
+      <div className="flex-1 flex flex-col lg:ml-0">
+        <Header onMobileMenuToggle={() => setIsMobileSidebarOpen(true)} />
         
-        <main className="flex-1 flex gap-6 p-6 overflow-hidden">
+        <main className="flex-1 flex gap-6 p-4 lg:p-6 overflow-hidden">
           {/* Left: Conversations & System Status */}
           <div className="w-80 flex flex-col gap-4 h-full overflow-hidden">
             {/* Conversations List */}
-            <Card className="border-border/50 flex-1 flex flex-col overflow-hidden">
+            <Card className="border-border/50 h-[420px] flex flex-col overflow-hidden">
               <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
                 <h3 className="font-bold text-foreground">Conversations</h3>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    const newSessionId = `session-${Date.now()}`
-                    setSessionId(newSessionId)
-                    setMessages([{
-                      id: '1',
-                      type: 'assistant',
-                      content: "# TradeQuest AI Analytics Engine Initialized\n\n**System Status**: ✅ ONLINE | **Data Access**: FULL | **Compute**: READY\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nI am your quantitative trading analyst - powered by large-scale data infrastructure and advanced AI. I have direct access to your complete trading history and can execute Python code to calculate any indicator or perform statistical analysis.\n\n## My Capabilities:\n\n🔍 **Forensic Trade Analysis**\n- Deep dive into every trade with OHLCV data\n- Calculate technical indicators (RSI, MACD, Moving Averages, Bollinger Bands)\n- Identify hidden patterns and behavioral inconsistencies\n\n📊 **Statistical Intelligence**\n- Execute Python code for advanced calculations\n- Run correlation analysis, regression tests, clustering\n- Find statistically significant patterns in your data\n\n💡 **Actionable Insights**\n- Provide evidence-based recommendations\n- Quantify expected improvements\n- Generate specific, implementable trading rules\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nEvery insight is backed by actual calculations on YOUR data. Ask me anything about your trading performance.\n\n**What would you like to analyze?**",
-                      timestamp: new Date().toISOString(),
-                      suggestions: [
-                        "Run forensic analysis on my losses",
-                        "Find patterns in my winning trades",
-                        "Calculate my edge by symbol and side",
-                        "Analyze my entry timing quality",
-                        "What's my statistically significant weakness?"
-                      ]
-                    }])
-                  }}
-                  className="text-xs"
-                >
-                  + New
-                </Button>
+                <div className="flex items-center gap-2">
+                  <HelpButton page="coach" />
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const newSessionId = `session-${Date.now()}`
+                      setSessionId(newSessionId)
+                      setMessages([{
+                        id: '1',
+                        type: 'assistant',
+                        content: "# TradeQuest AI Analytics Engine Initialized\n\n**System Status**: ✅ ONLINE | **Data Access**: FULL | **Compute**: READY\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nI am your quantitative trading analyst - powered by large-scale data infrastructure and advanced AI. I have direct access to your complete trading history and can execute Python code to calculate any indicator or perform statistical analysis.\n\n## My Capabilities:\n\n🔍 **Forensic Trade Analysis**\n- Deep dive into every trade with OHLCV data\n- Calculate technical indicators (RSI, MACD, Moving Averages, Bollinger Bands)\n- Identify hidden patterns and behavioral inconsistencies\n\n📊 **Statistical Intelligence**\n- Execute Python code for advanced calculations\n- Run correlation analysis, regression tests, clustering\n- Find statistically significant patterns in your data\n\n💡 **Actionable Insights**\n- Provide evidence-based recommendations\n- Quantify expected improvements\n- Generate specific, implementable trading rules\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nEvery insight is backed by actual calculations on YOUR data. Ask me anything about your trading performance.\n\n**What would you like to analyze?**",
+                        timestamp: new Date().toISOString(),
+                        suggestions: [
+                          "Run forensic analysis on my losses",
+                          "Find patterns in my winning trades",
+                          "Calculate my edge by symbol and side",
+                          "Analyze my entry timing quality",
+                          "What's my statistically significant weakness?"
+                        ]
+                      }])
+                    }}
+                    className="text-xs"
+                  >
+                    + New
+                  </Button>
+                </div>
               </div>
               
               <div className="flex-1 overflow-y-auto p-2 space-y-1 brand-scrollbar">
@@ -924,10 +1095,91 @@ export default function AICoach() {
             </div>
             )}
 
-            {/* Input */}
+            {/* Enhanced Input */}
             {user && (
             <div className="border-t border-border p-4 bg-card">
+              {/* Coach Controls */}
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium">Coach Mode:</span>
+                    <select
+                      value={coachMode}
+                      onChange={(e) => setCoachMode(e.target.value as any)}
+                      className="px-2 py-1 border border-border rounded bg-background text-sm"
+                    >
+                      <option value="aggressive">Aggressive</option>
+                      <option value="conservative">Conservative</option>
+                      <option value="balanced">Balanced</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant={voiceEnabled ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setVoiceEnabled(!voiceEnabled)}
+                      className="flex items-center space-x-1"
+                    >
+                      <SpeakerWaveIcon className="h-4 w-4" />
+                      <span>Voice</span>
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <div className="flex items-center space-x-1">
+                    <div className={cn(
+                      "w-2 h-2 rounded-full",
+                      voiceEnabled ? "bg-green-500" : "bg-gray-400"
+                    )} />
+                    <span>Voice {voiceEnabled ? 'On' : 'Off'}</span>
+                  </div>
+                  {isSpeaking && (
+                    <div className="flex items-center space-x-1">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                      <span>Speaking</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* File Upload */}
+              {selectedFile && (
+                <div className="mb-4 flex items-center space-x-2 p-2 bg-muted rounded-lg">
+                  <DocumentIcon className="h-4 w-4" />
+                  <span className="text-sm">{selectedFile.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedFile(null)}
+                    className="p-1"
+                  >
+                    ×
+                  </Button>
+                </div>
+              )}
+
+              {/* Input Controls */}
               <div className="flex gap-3">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center space-x-1"
+                >
+                  <PaperClipIcon className="h-4 w-4" />
+                  <span>Attach</span>
+                </Button>
+                
                 <div className="flex-1 relative">
                   <input
                     type="text"
@@ -935,18 +1187,49 @@ export default function AICoach() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                     placeholder="Ask me anything about your trading... (e.g., 'Analyze my losses', 'Calculate RSI for my last trade')"
-                    className="w-full px-4 py-3 pr-12 border-2 border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 pr-20 border-2 border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-dark-teal focus:border-transparent transition-all"
                     disabled={loading}
                   />
+                  
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+                    {isListening ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={stopListening}
+                        className="p-1 text-red-500"
+                      >
+                        <StopIcon className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={startListening}
+                        className="p-1"
+                      >
+                        <MicrophoneIcon className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={loading || !input.trim()}
+                      className="px-3 bg-gradient-to-r from-brand-dark-teal to-brand-bright-yellow hover:opacity-90 transition-opacity"
+                    >
+                      <PaperAirplaneIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={loading || !input.trim()}
-                  className="px-6 bg-gradient-to-r from-brand-dark-teal to-brand-bright-yellow hover:opacity-90 transition-opacity"
-                >
-                  <PaperAirplaneIcon className="h-5 w-5" />
-                </Button>
               </div>
+              
+              {/* Voice Status */}
+              {isListening && (
+                <div className="mt-2 flex items-center space-x-2 text-sm text-blue-600">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                  <span>Listening... Speak now</span>
+                </div>
+              )}
             </div>
             )}
           </div>
