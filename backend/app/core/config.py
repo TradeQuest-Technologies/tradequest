@@ -26,13 +26,25 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = None
     
     # Security
-    JWT_SECRET: str = "your-jwt-secret-key-change-in-production"
+    JWT_SECRET: str = "your-jwt-secret-key-change-in-production"  # MUST be set via environment variable in production
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 1440  # 24 hours (1440 minutes)
     
+    # Admin Access
+    ADMIN_PASSWORD: str = "TRADE!@#$%^"  # MUST be set via environment variable in production
+    
+    # Role-based Access
+    SOCIAL_MEDIA_MANAGER_PASSWORD: Optional[str] = None  # Will be auto-generated if not set
+    
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
-    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000", 
+        "http://localhost:3001",
+        "https://tradequest.tech",
+        "https://www.tradequest.tech",
+        "https://api.tradequest.tech"
+    ]
+    ALLOWED_HOSTS: List[str] = ["*"]  # Allow all hosts in production (behind load balancer)
     
     # AWS Configuration
     AWS_REGION: str = "us-east-1"
@@ -143,3 +155,8 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+
+# Generate social media manager password if not set (10 random digits)
+import random
+if not settings.SOCIAL_MEDIA_MANAGER_PASSWORD:
+    settings.SOCIAL_MEDIA_MANAGER_PASSWORD = ''.join([str(random.randint(0, 9)) for _ in range(10)])
